@@ -161,6 +161,26 @@ def nuixWorkerItemCallback(worker_item)
 								pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
 								pollingitem.addCustomMetadata("t3kaidetection", "#{nuixdetectionvalues}", "text", "api")
 							elsif detection[0] == nil
+								detectiontype = ""
+								detectionpercent = ""
+								detectionvalues = detection[2]
+								detectionvalues.each do |detectionvalue|
+									detectiontype = detectionvalue[0]
+									detectionpercent = detectionvalue[1]
+									puts "Detection Type : #{detectiontype}"
+									puts "Detetion Percent : #{detectionpercent}"
+									if nuixdetectionvalues == ''
+										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
+									else
+										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+									end
+								end
+								pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+								pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
+								pollingitem.addCustomMetadata("t3kaidetection", "#{nuixdetectionvalues}", "text", "api")
+							elsif detection[0] == "nil"
+								detectiontype = ""
+								detectionpercent = ""
 								detectionvalues = detection[2]
 								detectionvalues.each do |detectionvalue|
 									detectiontype = detectionvalue[0]
