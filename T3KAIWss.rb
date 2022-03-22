@@ -127,6 +127,7 @@ def nuixWorkerItemCallback(worker_item)
 					resulturi = URI.parse("#{resultendpoint}/#{@responseid}")
 					resultresponse = Net::HTTP.get_response(resulturi)
 					resultsjson = JSON.parse(resultresponse.body)
+					detectionvalues = ''
 					detections = ''
 					detections = resultsjson["detections"]["0"]
 					detectionscount = detections.count
