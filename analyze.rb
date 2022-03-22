@@ -1017,32 +1017,46 @@ class AnalyzeTask < Js::SwingWorker
 					resulturi = URI.parse("#{resultendpoint}/#{returnid}")
 					resultresponse = Net::HTTP.get_response(resulturi)
 					resultsjson = JSON.parse(resultresponse.body)
+					detectionvalues = ''
 					detections = ''
 					detections = resultsjson["detections"]["0"]
 					detectionscount = detections.count
 					@t3klog.info("Detections : #detection")
 					@t3klog.info("Detections Count: #detectionscount")
 					if detectionscount == 0
-						nomatch_count += 1
+						nomatch_count +=1
 						pollingitem.addTag("T3KAI Detection|Nothing to Report")
-						@status_bar.setText("T3KAI Result : #{detections}")
-						@t3klog.info("T3KAi Result: Nothing to Report")
 					else
 						resultsjson["detections"]["0"].each do |detection|
 							match_count += 1
-							if detectionvalues == ''
-								detectionvalues = "#{detection[0]} - #{detection[1]}"
-							else
-								detectionvalues = detectionvalues + "," + "#{detection[0]} - #{detection[1]}"
-							end
 							@t3klog.info("Detection : #{detection}")
-							@t3klog.info("Detection Type : #{detection[0]}")
-							@t3klog.info("Detection Percent : #{detection[1]}")
-							pollingitem .addTag("T3KAI Detection|#{detection[0]}")
-							@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
+							if detection[0] == "None"
+								detectionvalues = detection[2]
+								detectionvalues.each do |detectionvalue|
+									detectiontype = detectionvalue[0]
+									detectionpercent = detectionvalue[1]
+									@t3klog.info("Detection Type : #{detectiontype}")
+									@t3klog.info("Detetion Percent : #{detectionpercent}")
+									if detectionvalues == ''
+										detectionvalues = "#{detectiontype} - #{detectionpercent}"
+									else
+										detectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+									end
+								end
+								@t3klog.info("Detection : #{detection}")
+								@t3klog.info("Detection Type : #{detection[0]}")
+								@t3klog.info("Detection Percent : #{detection[1]}")
+								pollingitem .addTag("T3KAI Detection|#{detection[0]}")
+								@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
+							else
+								detectiontype = detection[0]
+								detectionpercent = detection[1]
+								@t3klog.info("Detection Value : #{detection[0]}")
+								@t3klog.info("Detection Percent : #{detection[1]}")
+								pollingitem.getCustomMetadata["t3kairesult"] = "Match Detected"
+								pollingitem.getCustomMetadata["t3kaidetection"] = "#{detectiontype} - #{detectionpercent}"
+							end
 						end
-						pollingitem .getCustomMetadata["t3kairesult"] = "Match Detected"
-						pollingitem .getCustomMetadata["t3kaidetection"] = "#{detectionvalues}"
 					end
 				end
 			elsif responsecode == '400'
