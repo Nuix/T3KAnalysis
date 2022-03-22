@@ -130,14 +130,13 @@ def nuixWorkerItemCallback(worker_item)
 					detectionvalues = ''
 					detections = ''
 					detections = resultsjson["detections"]["0"]
+					puts "Detections : #detection"
 					detectionscount = detections.count
-					@t3klog.info("Detections : #detection")
-					@t3klog.info("Detections Count: #detectionscount")
+					puts "Detections Count: #detectionscount"
 					if detectionscount == 0
 						nomatch_count += 1
 						pollingitem.addTag("T3KAI Detection|Nothing to Report")
-						@status_bar.setText("T3KAI Result : #{detections}")
-						@t3klog.info("T3KAi Result: Nothing to Report")
+						puts "T3KAi Result: Nothing to Report"
 					else
 						resultsjson["detections"]["0"].each do |detection|
 							match_count += 1
@@ -146,11 +145,11 @@ def nuixWorkerItemCallback(worker_item)
 							else
 								detectionvalues = detectionvalues + "," + "#{detection[0]} - #{detection[1]}"
 							end
-							@t3klog.info("Detection : #{detection}")
-							@t3klog.info("Detection Type : #{detection[0]}")
-							@t3klog.info("Detection Percent : #{detection[1]}")
+							puts "Detection : #{detection}"
+							puts "Detection Type : #{detection[0]}"
+							puts "Detection Percent : #{detection[1]}"
 							pollingitem .addTag("T3KAI Detection|#{detection[0]}")
-							@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
+							puts "T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}"
 						end
 						pollingitem .getCustomMetadata["t3kairesult"] = "Match Detected"
 						pollingitem .getCustomMetadata["t3kaidetection"] = "#{detectionvalues}"
