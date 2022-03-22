@@ -128,20 +128,31 @@ def nuixWorkerItemCallback(worker_item)
 					resultresponse = Net::HTTP.get_response(resulturi)
 					resultsjson = JSON.parse(resultresponse.body)
 					detections = ''
-					detections = resultsjson["detections"]
-					puts "Detections: #{detections}"
-					if detections == "Nothing to report"
+					detections = resultsjson["detections"]["0"]
+					detectionscount = detections.count
+					@t3klog.info("Detections : #detection")
+					@t3klog.info("Detections Count: #detectionscount")
+					if detectionscount == 0
+						nomatch_count += 1
 						pollingitem.addTag("T3KAI Detection|Nothing to Report")
+						@status_bar.setText("T3KAI Result : #{detections}")
+						@t3klog.info("T3KAi Result: Nothing to Report")
 					else
-						if detections != nil
-							detectiontype = resultsjson["detections"][0][0]
-							detectionpercent = resultsjson["detections"][0][1]
-							pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-							pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
-#							pollingitem.getCustomMetadata["t3kairesult"] = "Match Detected"
-							pollingitem.addCustomMetadata("t3kaidetection", "#{detectiontype} - #{detectionpercent}", "text", "api")
-#							pollingitem.getCustomMetadata["t3kaidetection"] = "#{detectiontype} - #{detectionpercent}"
+						resultsjson["detections"]["0"].each do |detection|
+							match_count += 1
+							if detectionvalues == ''
+								detectionvalues = "#{detection[0]} - #{detection[1]}"
+							else
+								detectionvalues = detectionvalues + "," + "#{detection[0]} - #{detection[1]}"
+							end
+							@t3klog.info("Detection : #{detection}")
+							@t3klog.info("Detection Type : #{detection[0]}")
+							@t3klog.info("Detection Percent : #{detection[1]}")
+							pollingitem .addTag("T3KAI Detection|#{detection[0]}")
+							@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
 						end
+						pollingitem .getCustomMetadata["t3kairesult"] = "Match Detected"
+						pollingitem .getCustomMetadata["t3kaidetection"] = "#{detectionvalues}"
 					end
 				elsif responsecode == '400'
 					puts "Response code #{responsecode}"
