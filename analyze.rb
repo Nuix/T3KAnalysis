@@ -1018,24 +1018,31 @@ class AnalyzeTask < Js::SwingWorker
 					resultresponse = Net::HTTP.get_response(resulturi)
 					resultsjson = JSON.parse(resultresponse.body)
 					detections = ''
-					detections = resultsjson["detections"]
+					detections = resultsjson["detections"]["0"]
+					detectionscount = detections.count
 					@t3klog.info("Detections : #detection")
-					if detections == "Nothing to report"
+					@t3klog.info("Detections Count: #detectionscount")
+					if detectionscount == 0
 						nomatch_count += 1
 						pollingitem.addTag("T3KAI Detection|Nothing to Report")
 						@status_bar.setText("T3KAI Result : #{detections}")
 						@t3klog.info("T3KAi Result: Nothing to Report")
 					else
-						match_count += 1
-						if detections != nil
-							pollingitem .getCustomMetadata["t3kairesult"] = "Match Detected"
-							detectiontype = resultsjson["detections"][0][0]
-							detectionpercent = resultsjson["detections"][0][1]
-							pollingitem .getCustomMetadata["t3kaidetection"] = "#{detectiontype} - #{detectionpercent}"
-							pollingitem .addTag("T3KAI Detection|#{detectiontype}")
-							@status_bar.setText("T3KAI Detection: #{detections} : type: #{detectiontype} : perecent: #{detectionpercent}")
-							@t3klog.info("T3KAI Detection: #{detections} : type: #{detectiontype} : perecent: #{detectionpercent}")
+						resultsjson["detections"]["0"].each do |detection|
+							match_count += 1
+							if detectionvalues == ''
+								detectionvalues = "#{detection[0]} - #{detection[1]}"
+							else
+								detectionvalues = detectionvalues + "," + "#{detection[0]} - #{detection[1]}"
+							end
+							@t3klog.info("Detection : #{detection}")
+							@t3klog.info("Detection Type : #{detection[0]}")
+							@t3klog.info("Detection Percent : #{detection[1]}")
+							pollingitem .addTag("T3KAI Detection|#{detection[0]}")
+							@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
 						end
+						pollingitem .getCustomMetadata["t3kairesult"] = "Match Detected"
+						pollingitem .getCustomMetadata["t3kaidetection"] = "#{detectionvalues}"
 					end
 				end
 			elsif responsecode == '400'
