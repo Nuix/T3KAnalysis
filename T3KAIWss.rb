@@ -130,7 +130,7 @@ def nuixWorkerItemCallback(worker_item)
 					resulturi = URI.parse("#{resultendpoint}/#{@responseid}")
 					resultresponse = Net::HTTP.get_response(resulturi)
 					resultsjson = JSON.parse(resultresponse.body)
-					detectionvalues = ''
+					nuixdetectionvalues = ''
 					detections = ''
 					detections = resultsjson["detections"]["0"]
 					puts "Detections : #detection"
@@ -150,15 +150,15 @@ def nuixWorkerItemCallback(worker_item)
 									detectionpercent = detectionvalue[1]
 									puts "Detection Type : #{detectiontype}"
 									puts "Detetion Percent : #{detectionpercent}"
-									if detectionvalues == ''
-										detectionvalues = "#{detectiontype} - #{detectionpercent}"
+									if nuixdetectionvalues == ''
+										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
 									else
-										detectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
 									end
 								end
 								pollingitem.addTag("T3KAI Detection|#{detectiontype}")
 								pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
-								pollingitem.addCustomMetadata("t3kaidetection", "#{detetionvalues}", "text", "api")
+								pollingitem.addCustomMetadata("t3kaidetection", "#{nuixdetectionvalues}", "text", "api")
 							else
 								detectiontype = detection[0]
 								detectionpercent = detection[1]
