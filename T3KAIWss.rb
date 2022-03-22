@@ -139,33 +139,34 @@ def nuixWorkerItemCallback(worker_item)
 						pollingitem.addTag("T3KAI Detection|Nothing to Report")
 					else
 						resultsjson["detections"]["0"].each do |detection|
-						match_count += 1
-						puts "Detection : #{detection}"
-						if detection[0] == "None"
-							detectionvalues = detection[2]
-							detectionvalues.each do |detectionvalue|
-								detectiontype = detectionvalue[0]
-								detectionpercent = detectionvalue[1]
-								puts "Detection Type : #{detectiontype}"
-								puts "Detetion Percent : #{detectionpercent}"
-								if detectionvalues == ''
-									detectionvalues = "#{detectiontype} - #{detectionpercent}"
-								else
-									detectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+							match_count += 1
+							puts "Detection : #{detection}"
+							if detection[0] == "None"
+								detectionvalues = detection[2]
+								detectionvalues.each do |detectionvalue|
+									detectiontype = detectionvalue[0]
+									detectionpercent = detectionvalue[1]
+									puts "Detection Type : #{detectiontype}"
+									puts "Detetion Percent : #{detectionpercent}"
+									if detectionvalues == ''
+										detectionvalues = "#{detectiontype} - #{detectionpercent}"
+									else
+										detectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+									end
 								end
-							end
-							pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-							pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
-							pollingitem.addCustomMetadata("t3kaidetection", "#{detetionvalues}", "text", "api")
-						else
-							detectiontype = detection[0]
-							detectionpercent = detection[1]
-							puts "Detection Value : #{detection[0]}"
-							puts "Detection Percent : #{detection[1]}"
+								pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+								pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
+								pollingitem.addCustomMetadata("t3kaidetection", "#{detetionvalues}", "text", "api")
+							else
+								detectiontype = detection[0]
+								detectionpercent = detection[1]
+								puts "Detection Value : #{detection[0]}"
+								puts "Detection Percent : #{detection[1]}"
 
-							pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-							pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
-							pollingitem.addCustomMetadata("t3kaidetection", "#{detectiontype} - #{detectionpercent}", "text", "api")
+								pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+								pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
+								pollingitem.addCustomMetadata("t3kaidetection", "#{detectiontype} - #{detectionpercent}", "text", "api")
+							end
 						end
 					end
 				elsif responsecode == '400'
