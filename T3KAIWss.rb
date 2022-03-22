@@ -47,6 +47,8 @@ def nuixWorkerItemCallback(worker_item)
 	t3kid = t3kaijsonstring["t3kid"]
 	t3kaibody = ''
 	pathtoimage = ''
+	match_count = 0
+	nomatch_count = 0
 
 	if analyzekindsarray.include?(item_kind.to_s)
 		binary = source_item.getBinary
