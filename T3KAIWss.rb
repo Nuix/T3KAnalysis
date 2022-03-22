@@ -153,8 +153,11 @@ def nuixWorkerItemCallback(worker_item)
 							pollingitem .addTag("T3KAI Detection|#{detection[0]}")
 							puts "T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}"
 						end
-						pollingitem .getCustomMetadata["t3kairesult"] = "Match Detected"
-						pollingitem .getCustomMetadata["t3kaidetection"] = "#{detectionvalues}"
+						pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
+#						pollingitem.getCustomMetadata["t3kairesult"] = "Match Detected"
+						pollingitem.addCustomMetadata("t3kaidetection", "#{detectionvalues}", "text", "api")
+#						pollingitem.getCustomMetadata["t3kaidetection"] = "#{detectiontype} - #{detectionpercent}"
+
 					end
 				elsif responsecode == '400'
 					puts "Response code #{responsecode}"
