@@ -130,12 +130,13 @@ def nuixWorkerItemCallback(worker_item)
 					resulturi = URI.parse("#{resultendpoint}/#{@responseid}")
 					resultresponse = Net::HTTP.get_response(resulturi)
 					resultsjson = JSON.parse(resultresponse.body)
+					puts "Results JSON: #{resultsjson}"
 					nuixdetectionvalues = ''
 					detections = ''
 					detections = resultsjson["detections"]["0"]
-					puts "Detections : #detection"
+					puts "Detections : {#detection}"
 					detectionscount = detections.count
-					puts "Detections Count: #detectionscount"
+					puts "Detections Count: {#detectionscount}"
 					if detectionscount == 0
 						nomatch_count +=1
 						pollingitem.addTag("T3KAI Detection|Nothing to Report")
