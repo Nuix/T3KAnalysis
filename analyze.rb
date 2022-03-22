@@ -1017,7 +1017,7 @@ class AnalyzeTask < Js::SwingWorker
 					resulturi = URI.parse("#{resultendpoint}/#{returnid}")
 					resultresponse = Net::HTTP.get_response(resulturi)
 					resultsjson = JSON.parse(resultresponse.body)
-					detectionvalues = ''
+					nuixdetectionvalues = ''
 					detections = ''
 					detections = resultsjson["detections"]["0"]
 					detectionscount = detections.count
@@ -1037,16 +1037,56 @@ class AnalyzeTask < Js::SwingWorker
 									detectionpercent = detectionvalue[1]
 									@t3klog.info("Detection Type : #{detectiontype}")
 									@t3klog.info("Detetion Percent : #{detectionpercent}")
-									if detectionvalues == ''
-										detectionvalues = "#{detectiontype} - #{detectionpercent}"
+									if nuixdetectionvalues == ''
+										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
 									else
-										detectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
 									end
 								end
 								@t3klog.info("Detection : #{detection}")
 								@t3klog.info("Detection Type : #{detection[0]}")
 								@t3klog.info("Detection Percent : #{detection[1]}")
-								pollingitem .addTag("T3KAI Detection|#{detection[0]}")
+								pollingitem.addTag("T3KAI Detection|#{detection[0]}")
+								@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
+							elsif detection[0] == nil
+								detectiontype = ''
+								detectionpercent = ''
+								detectionvalues = detection[2]
+								detectionvalues.each do |detectionvalue|
+									detectiontype = detectionvalue[0]
+									detectionpercent = detectionvalue[1]
+									@t3klog.info("Detection Type : #{detectiontype}")
+									@t3klog.info("Detetion Percent : #{detectionpercent}")
+									if nuixdetectionvalues == ''
+										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
+									else
+										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+									end
+								end
+								@t3klog.info("Detection : #{detection}")
+								@t3klog.info("Detection Type : #{detection[0]}")
+								@t3klog.info("Detection Percent : #{detection[1]}")
+								pollingitem.addTag("T3KAI Detection|#{detection[0]}")
+								@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
+							elsif detection[0] == "nil"
+								detectiontype = ''
+								detectionpercent = ''
+								detectionvalues = detection[2]
+								detectionvalues.each do |detectionvalue|
+									detectiontype = detectionvalue[0]
+									detectionpercent = detectionvalue[1]
+									@t3klog.info("Detection Type : #{detectiontype}")
+									@t3klog.info("Detetion Percent : #{detectionpercent}")
+									if nuixdetectionvalues == ''
+										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
+									else
+										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+									end
+								end
+								@t3klog.info("Detection : #{detection}")
+								@t3klog.info("Detection Type : #{detection[0]}")
+								@t3klog.info("Detection Percent : #{detection[1]}")
+								pollingitem.addTag("T3KAI Detection|#{detection[0]}")
 								@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
 							else
 								detectiontype = detection[0]
