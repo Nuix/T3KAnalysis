@@ -134,7 +134,7 @@ def nuixWorkerItemCallback(worker_item)
 					nuixdetectionvalues = ''
 					detections = ''
 					detections = resultsjson["detections"]["0"]
-					puts "Detections : #{detection}"
+					puts "Detections : #{detections}"
 					detectionscount = detections.count
 					puts "Detections Count: #{detectionscount}"
 					if detectionscount == 0
