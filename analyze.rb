@@ -1353,7 +1353,6 @@ class AnalyzeTask < Js::SwingWorker
 				end
 			end
 		end
-		alltagsstring = alltagsarray.to_s
 
 		@processingStatsErrorValue.setText(error_count.to_s)
 		@processingStatsDetectionsValue.setText(detections.to_s)
