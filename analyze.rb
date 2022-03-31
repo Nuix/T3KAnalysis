@@ -96,6 +96,7 @@ class Primary < Js::JFrame
 		progressBar.set_value(0)
 		progressBar.set_string_painted(true)
 		panelMain.add(progressBar)
+		@progress_bar = progressBar
 		
 		# Add new Tabs
 		tabbedPane = Js::JTabbedPane.new()
@@ -154,6 +155,15 @@ class Primary < Js::JFrame
 				self.repaint
 			end
 		}
+		analyzeCancelButton = Js::JButton.new()
+		analyzeCancelButton.setText("Cancel")
+		analyzeCancelButton.setToolTipText("Cancel analyze process gracefully")
+		analyzeCancelButton.addActionListener { |e|
+			Jl::System.gc()
+			self.dispose()
+		}
+
+
 		#button to analyse selected items
 		analyzeButton = Js::JButton.new()
 		analyzeButton.setText("Analyze Items in T3KAI")
@@ -181,7 +191,7 @@ class Primary < Js::JFrame
 
 			@abortSignal = false
 			
-			task = AnalyzeTask.new(self, analyzeButton, statusBar, utilities, @analyze_items, processingStatsPanel, @processingStatsCompleteValue, @processingStatsErrorValue, @processingStatsDetectionsValue, @processingStatsNoDetectionsValue, @t3klog, @current_case)
+			task = AnalyzeTask.new(self, analyzeButton, analyzeCancelButton, statusBar, progressBar, utilities, @analyze_items, processingStatsPanel, @processingStatsCompleteValue, @processingStatsErrorValue, @processingStatsDetectionsValue, @processingStatsNoDetectionsValue, @processingStatsTaggedItemsValue, @t3klog, @current_case)
 #			task.add_property_change_listener { |e2|
 #				if "progress" == e2.get_property_name
 #					progressBar.set_value(e2.get_new_value.to_i)
@@ -195,13 +205,6 @@ class Primary < Js::JFrame
 			analyzeButton.setEnabled false
 		end
 		
-		analyzeCancelButton = Js::JButton.new()
-		analyzeCancelButton.setText("Cancel")
-		analyzeCancelButton.setToolTipText("Cancel analyze process gracefully")
-		analyzeCancelButton.addActionListener { |e|
-			Jl::System.gc()
-			self.dispose()
-		}
 		analyzePanel.add typeSelectionLabel
 		analyzePanel.add typeSelectionBox
 		analyzePanel.add nuixQueryBoxLabel
@@ -263,129 +266,15 @@ class Primary < Js::JFrame
 		importButton.addActionListener { |e|
 			imagedirectory = fileSelectionBox.getText()
 			imagedirectory = imagedirectory.gsub("\\","\\\\")
-			@status_bar.setText("Processing started on #{imagedirectory} items...")
-			@t3klog.info("Processing started on #{imagedirectory} items...")
-			progressBar.set_value(1)
-			#Forced to redeclare!?
-			@abortSignal = false
-			begin
-				t3kaijsonfile = File.read('C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json')
-				t3kaijsonstring = JSON.parse(t3kaijsonfile)
-				loglocation = t3kaijsonstring['nuixLogLocation']
-				@t3klog.info("Log Location: #{loglocation}")
-				caselocation = t3kaijsonstring['caseBaseDirectory']
-				@t3klog.info("Case Location: #{caselocation}")
-				casebasename = t3kaijsonstring['caseBaseName']
-				@t3klog.info("Case Base Name: #{casebasename}")
-				workercount = t3kaijsonstring['workerCount']
-				@t3klog.info("Worker Count: #{workercount}")
-				workermemory = t3kaijsonstring['workerMemory']
-				@t3klog.info("Worker Memory: #{workermemory}")
-
-				callback_frequency = 5
-				callback_count = 0
-				worker_side_script = "C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAIWss.rb"
-				@t3klog.info("Worker Side Script: #{worker_side_script}")
-				#######################################
-
-				case_name = 'T3KAI - ' + Time.now.strftime('%Y%d%m %H%M%S')
-				@t3klog.info("Case Name: #{case_name}")
-
-				caseFactory = @utilities.getCaseFactory()
-				case_settings = {
-					:compound => false,
-					:name => "#{case_name}",
-					:description => "Process in Nuix and Analyze T3KAI ",
-					:investigator => "T3K Analyze"
-				}
-				$current_case = caseFactory.create(caselocation + '/' + case_name, case_settings)
-				case_guid = $current_case.getGuid
-				processor = $current_case.createProcessor
-				processing_settings = {
-					:traversalScope => "full_traversal",
-					:processLooseFileContents => true,
-					:processForensicImages => true,
-						:stopWords => "none",
-						:stemming => "none",
-						:enableExactQueries => true,
-						:extractNamedEntities => true,
-						:extractNamedEntitiesFromTextStripped => true,
-						:extractShingles => true,
-						:processTextSummaries => true,
-						:extractFromSlackSpace => false,
-						:carveFileSystemUnallocatedSpace => false,
-						:calculateAuditedSize => false,
-						:storeBinary=> true,
-						:maxStoredBinary => 256000000,
-						:maxDigestSize => 256000000,
-						:addBccToEmailDigests => false,
-						:addCommunicationDateToEmailDigests => false,
-						:processFamilyFields => true,
-						:hideEmbeddedImmaterialData => false,
-						:analysisLanguage => "en",
-						:identifyPhysicalFiles => true,
-						:reuseEvidenceStores => true,
-						:skinToneAnalysis => true,
-						:detectFaces => true,
-						:exactqueries => true,
-						:processtext => true,
-						:createThumbnails => true,
-						:calculateSSDeepFuzzyHash => true,
-						:extractNamedEntitiesFromText => true,
-						:extractNamedEntitiesFromProperties => true,
-						:reportProcessingStatus => "physical_files",
-						:digests => ["MD5","SHA-1","SHA-256"],
-						:calculatePhotoDNARobustHash => true,
-						:workerItemCallback => "ruby:#{IO.read(worker_side_script)}"
-					}
-					processor.setProcessingSettings(processing_settings)
-					parallel_processing_settings = {
-						:workerCount => workercount,
-						:workerMemory => workermemory,
-						:embedBroker => true,
-						:brokerMemory => 1168,
-						:workerTemp => "C:\\Temp\\WorkerTemp"
-				}
-				processor.setParallelProcessingSettings(parallel_processing_settings)
-				evidence_name = Time.now.strftime('%Y-%d-%m %H:%M:%S %Z')
-				evidence_container = processor.newEvidenceContainer(evidence_name)
-				evidence_container.addFile(imagedirectory)
-				evidence_container.setEncoding("utf-8")
-				evidence_container.save
-
-				start_time = Time.now
-				last_progress = Time.now
-				semaphore = Mutex.new
-
-				@t3klog.info("T3KAI Analysis processing started at #{start_time}...")
-				processor.when_progress_updated do |progress|
-					semaphore.synchronize {
-
-					# Progress message every 15 seconds
-					current_size = progress.get_current_size
-					total_size = progress.get_total_size
-					percent_completed = current_size.percent_of(total_size).round(1)
-					@status_bar.setText("Percent Completed #{percent_completed}...")
-					@t3klog.info("Percent Completed: #{percent_completed} : Current Size: #{current_size} : Total Size: #{total_size} ...")
-					progressBar.set_value(total_size)
-					if callback_count % callback_frequency == 0
-						last_progress = Time.now
-						@status_bar.setText("Processing Status #{last_progress} - items processed #{callback_count}...")
-						@t3klog.info("Processing Status #{last_progress} - items processed #{total_size}...")
-						progressBar.set_value(percent_completed)
-					end
-					}
-					callback_count += 1
-				end
-
-				processor.process
-				@status_bar.setText("Processing completed - #{Time.now}...")
-				@t3klog.info("Processing completed at  #{Time.now}...")
-				progressBar.set_value(100)
-			ensure
-				Jl::System.gc()
-				#self.dispose()
-			end
+			
+			processtask = ProcessAndAnalyzeTask.new(self, importButton, importCancelButton, fileSelectionButton, statusBar, progressBar, utilities, imagedirectory, processingStatsPanel, @processingStatsCompleteValue, @processingStatsErrorValue, @processingStatsDetectionsValue, @processingStatsNoDetectionsValue, @processingStatsTaggedItemsValue, @t3klog)
+#			task.add_property_change_listener { |e2|
+#				if "progress" == e2.get_property_name
+#					progressBar.set_value(e2.get_new_value.to_i)
+#				end
+#			}
+			processtask.execute()
+			
 		}
 		
 		importPanel.add fileSelectionLabel
@@ -643,8 +532,11 @@ class Primary < Js::JFrame
 		processingStatsTaggedItemsLabel = Js::JLabel.new()
 		processingStatsTaggedItemsLabel.setText("Tagged Items:")
 		taggedItems = ["army_tank:3","gun:3","Nothing to Report:14"]
-		@processingStatsTaggedItemsValue = Js::JLabel.new()
-		@processingStatsTaggedItemsValue.setText(taggedItems.to_s)
+		taggedItemsstring = taggedItems.to_s
+		taggedItemsstring = taggedItemsstring.gsub(",","\n")
+		@processingStatsTaggedItemsValue = Js::JTextArea.new(30, 30)
+		@processingStatsTaggedItemsValue.setText(taggedItemsstring)
+		@processingStatsTaggedItemsValue.setEditable(false)
 		
 		processingStatsPanel.add processingStatsCompleteLabel
 		processingStatsPanel.add @processingStatsCompleteValue
@@ -669,7 +561,7 @@ class Primary < Js::JFrame
 				.addComponent(processingStatsNoDetectionsLabel, 18, 18, 18)
 				.addComponent(@processingStatsNoDetectionsValue, 18, 18, 18)
 				.addComponent(processingStatsTaggedItemsLabel, 18, 18, 18)
-				.addComponent(@processingStatsTaggedItemsValue, 18, 18, 18)
+				.addComponent(@processingStatsTaggedItemsValue, 300, 300, 300)
 		)
 		
 		processingStatsLayout.setHorizontalGroup(
@@ -774,12 +666,244 @@ class Primary < Js::JFrame
 	
 end
 
+class ProcessAndAnalyzeTask < Js::SwingWorker
+	def initialize(program, process_button, process_cancel_button, process_browse_button, status_bar, progress_bar, utilities, original_items, processingStatusPanel, processingStatsCompleteValue, processingStatusErrorValue, processingtatusDetectionsValue, processingStatsNoDetectionsValue, processingStatsTaggedItemsValue, t3klog)
+		super()
+		@program = program
+		@process_button = process_button
+		@process_cancel_button = process_cancel_button
+		@process_browse_button = process_browse_button
+		@status_bar = status_bar
+		@progress_bar = progress_bar
+		@utilities = utilities
+		@original_items = original_items
+		@processingStatusPanel = processingStatusPanel
+		@processingStatsCompleteValue = processingStatsCompleteValue
+		@processingStatusErrorValue = processingStatusErrorValue
+		@processingtatusDetectionsValue = processingtatusDetectionsValue
+		@processingStatsNoDetectionsValue = processingStatsNoDetectionsValue
+		@processingStatsTaggedItemsValue = processingStatsTaggedItemsValue
+		@t3klog = t3klog
+	end
+	
+	def doInBackground
+		begin
+			@program.set_cursor(Ja::Cursor.getPredefinedCursor(Ja::Cursor::WAIT_CURSOR))			
+			set_progress(1)
+			@status_bar.setText("Start processing : #{@original_items}")
+			@t3klog.info("Start processing : #{@original_items}")
+			t3kProcessAndAnalyze(@original_items)
+			set_progress(100)
+			@program.set_cursor(Ja::Cursor.getPredefinedCursor(Ja::Cursor::DEFAULT_CURSOR))
+		rescue => ecp
+			Js::JOptionPane.showMessageDialog(@program, "Exception - doInBackground: #{ecp.backtrace}");
+			@t3klog.info("Excpetion in doInBackground: #{ecp.class.name}")
+			@t3klog.info("Excpetion in doInBackground: #{ecp.backtrace}")
+			@t3klog.info("Excpetion in doInBackground: #{ecp.message}")
+			@doneState = "error"
+			@program.set_cursor(Ja::Cursor.getPredefinedCursor(Ja::Cursor::DEFAULT_CURSOR))
+		end
+	end
+	
+	def t3kProcessAndAnalyze(original_items)
+		begin
+			@process_button.setEnabled(false)
+			@process_cancel_button.setEnabled(false)
+			@process_browse_button.setEnabled(false)
+			@status_bar.setText("Processing started on #{original_items} items...")
+			@t3klog.info("Processing started on #{original_items} items...")
+			@progress_bar.setValue(1)
+			@progress_bar.setString("Processing...")
+			#Forced to redeclare!?
+			@abortSignal = false
+			begin
+				t3kaijsonfile = File.read('C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json')
+				t3kaijsonstring = JSON.parse(t3kaijsonfile)
+				analyzekinds = t3kaijsonstring['analyzekinds']
+				loglocation = t3kaijsonstring['nuixLogLocation']
+				@t3klog.info("Log Location: #{loglocation}")
+				caselocation = t3kaijsonstring['caseBaseDirectory']
+				@t3klog.info("Case Location: #{caselocation}")
+				casebasename = t3kaijsonstring['caseBaseName']
+				@t3klog.info("Case Base Name: #{casebasename}")
+				workercount = t3kaijsonstring['workerCount']
+				@t3klog.info("Worker Count: #{workercount}")
+				workermemory = t3kaijsonstring['workerMemory']
+				@t3klog.info("Worker Memory: #{workermemory}")
+				windowsexportlocation = t3kaijsonstring['windowsexportlocation']
+				@t3klog.info("Windows Export Location: #{windowsexportlocation}")
+				linuxprocessingdir = t3kaijsonstring['linuxprocessingdir']
+				@t3klog.info("Linux Processing Directory: #{linuxprocessingdir}")
+
+				callback_frequency = 5
+				callback_count = 0
+				worker_side_script = "C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAIWss.rb"
+				@t3klog.info("Worker Side Script: #{worker_side_script}")
+				#######################################
+
+				case_name = 'T3KAI - ' + Time.now.strftime('%Y%d%m %H%M%S')
+				@t3klog.info("Case Name: #{case_name}")
+
+				caseFactory = @utilities.getCaseFactory()
+				case_settings = {
+					:compound => false,
+					:name => "#{case_name}",
+					:description => "Process in Nuix and Analyze T3KAI ",
+					:investigator => "T3K Analyze"
+				}
+				$current_case = caseFactory.create(caselocation + '/' + case_name, case_settings)
+				case_guid = $current_case.getGuid
+				processor = $current_case.createProcessor
+				processing_settings = {
+					:traversalScope => "full_traversal",
+					:processLooseFileContents => true,
+					:processForensicImages => true,
+					:stopWords => "none",
+					:stemming => "none",
+					:enableExactQueries => true,
+					:extractNamedEntities => true,
+					:extractNamedEntitiesFromTextStripped => true,
+					:extractShingles => true,
+					:processTextSummaries => true,
+					:extractFromSlackSpace => false,
+					:carveFileSystemUnallocatedSpace => false,
+					:calculateAuditedSize => false,
+					:storeBinary=> true,
+					:maxStoredBinary => 256000000,
+					:maxDigestSize => 256000000,
+					:addBccToEmailDigests => false,
+					:addCommunicationDateToEmailDigests => false,
+					:processFamilyFields => true,
+					:hideEmbeddedImmaterialData => false,
+					:analysisLanguage => "en",
+					:identifyPhysicalFiles => true,
+					:reuseEvidenceStores => true,
+					:skinToneAnalysis => true,
+					:detectFaces => true,
+					:exactqueries => true,
+					:processtext => true,
+					:createThumbnails => true,
+					:calculateSSDeepFuzzyHash => true,
+					:extractNamedEntitiesFromText => true,
+					:extractNamedEntitiesFromProperties => true,
+					:reportProcessingStatus => "physical_files",
+					:digests => ["MD5","SHA-1","SHA-256"],
+					:calculatePhotoDNARobustHash => true,
+					:workerItemCallback => "ruby:#{IO.read(worker_side_script)}"
+					}
+					processor.setProcessingSettings(processing_settings)
+					parallel_processing_settings = {
+						:workerCount => workercount,
+						:workerMemory => workermemory,
+						:embedBroker => true,
+						:brokerMemory => 1168,
+						:workerTemp => "C:\\Temp\\WorkerTemp"
+					}
+					processor.setParallelProcessingSettings(parallel_processing_settings)
+					evidence_name = Time.now.strftime('%Y-%d-%m %H:%M:%S %Z')
+					evidence_container = processor.newEvidenceContainer(evidence_name)
+					evidence_container.addFile(original_items)
+					evidence_container.setEncoding("utf-8")
+					evidence_container.save
+
+					start_time = Time.now
+					last_progress = Time.now
+					semaphore = Mutex.new
+
+					@t3klog.info("T3KAI Analysis processing started at #{start_time}...")
+					processor.when_progress_updated do |progress|
+					semaphore.synchronize {
+					#		 Progress message every 15 seconds
+						current_size = progress.get_current_size
+						total_size = progress.get_total_size
+						percent_completed = current_size.percent_of(total_size).round(1)
+						@status_bar.setText("Percent Completed #{percent_completed}...")
+						@t3klog.info("Percent Completed: #{percent_completed} : Current Size: #{current_size} : Total Size: #{total_size} ...")
+						@progress_bar.set_value(percent_completed)
+#						@progress_bar.setString("#{total_size}")
+						if callback_count % callback_frequency == 0
+							last_progress = Time.now
+							@status_bar.setText("Processing Status #{last_progress} - items processed #{callback_count}...")
+							@t3klog.info("Processing Status #{last_progress} - items processed #{total_size}...")
+							@progress_bar.set_value(percent_completed)
+#							@progress_bar.setString("#{percent_completed}")
+						end
+					}
+					callback_count += 1
+				end
+				@t3klog.info("Starting Async Processing on #{@original_items}...")
+				@status_bar.setText("Starting Async Processing on #{@original_items}...")
+				processor.process
+#				processor.processAsync
+				@t3klog.info("Processing completed at  #{Time.now}...")
+				FileUtils.rm_f Dir.glob("#{windowsexportlocation}/*")
+				analyzedstring = ''
+				detections = 0
+				@t3klog.info("Analyze Kinds  #{analyzekinds}...")
+				analyzekindsarray = analyzekinds.split(",")
+				analyzekindsarray.each do |analyzekind|
+					analyzedkindcount = $current_case.count("kind:#{analyzekind}")
+					if analyzedstring == ''
+						analyzedstring = "#{analyzekind}:#{analyzedkindcount}"
+					else
+						analyzedstring = analyzedstring + "," + "#{analyzekind}:#{analyzedkindcount}"
+					end
+				end
+				@processingStatsCompleteValue.setText(analyzedstring)
+				nomatchdetection = $current_case.count("tag:" + "\"T3KAI Detection|Nothing to Report\"")
+				@processingStatsNoDetectionsValue.setText("#{nomatchdetection}")
+				tags = $current_case.getAllTags
+				alltagsarray = []
+				tags.each do |tag|
+					@status_bar.setText("Processing Tag: #{tag}")
+					searchstring = "tag:" + "\"#{tag}\""
+					#puts "Searchstring : #{searchstring}"
+					tagcount =  $current_case.count("#{searchstring}")
+					detections = detections + tagcount
+					alltagsarray << "#{tag}:#{tagcount}"
+				end
+				alltagsstring = ''
+				icount = 0
+				alltagsarray.each do |tagname|
+					if icount == 2
+						alltagsstring = alltagsstring + "," + tagname + "\n"
+						icount = 0
+					else
+						icount += 1
+						if alltagsstring == ''
+							alltagsstring = tagname
+						else
+							alltagsstring = alltagsstring + "," + tagname
+						end
+					end
+				end
+#				alltagsstring = alltagsstring.gsub(",", "\n")
+				@t3klog.info("All tag array : #{alltagsarray.to_s}")
+				@t3klog.info("All tag string : #{alltagsstring}")
+				@processingStatsTaggedItemsValue.setText(alltagsstring)
+				@processingtatusDetectionsValue.setText(detections.to_s)
+				@progress_bar.set_value(100)
+				@status_bar.setText("Processing completed - #{Time.now}...")
+				@progress_bar.setString("Processing completed at #{Time.now}...")
+				@process_cancel_button.setText("Close")
+				@process_cancel_button.setEnabled(true)
+				$current_case.close
+			ensure
+				Jl::System.gc()
+				#self.dispose()
+			end
+		end
+	end
+end
+
 class AnalyzeTask < Js::SwingWorker
-	def initialize(program, analyze_button, status_bar, utilities, analyze_items, processingStatsPanel, processingStatsCompleteValue, processingStatsErrorValue, processingStatsDetectionsValue, processingStatsNoDetectionsValue, t3klog, current_case)
+	def initialize(program, analyze_button, analyze_cancel_button, status_bar, progress_bar, utilities, analyze_items, processingStatsPanel, processingStatsCompleteValue, processingStatsErrorValue, processingStatsDetectionsValue, processingStatsNoDetectionsValue, processingStatsTaggedItemsValue, t3klog, current_case)
 		super()
 		@program = program
 		@analyze_button = analyze_button
+		@analyze_cancel_button = analyze_cancel_button
 		@status_bar = status_bar
+		@progress_bar = progress_bar
 		@utilities = utilities
 		@doneState = "Normal"
 		@processingStatsPanel = processingStatsPanel
@@ -787,6 +911,7 @@ class AnalyzeTask < Js::SwingWorker
 		@processingStatsErrorValue = processingStatsErrorValue
 		@processingStatsDetectionsValue = processingStatsDetectionsValue 
 		@processingStatsNoDetectionsValue = processingStatsNoDetectionsValue
+		@processingStatsTaggedItemsValue = processingStatsTaggedItemsValue
 		@analyze_items = analyze_items
 		@t3klog = t3klog
 		@current_case = current_case
@@ -820,6 +945,8 @@ class AnalyzeTask < Js::SwingWorker
 			match_count = 0
 			nomatch_count = 0
 				
+			@analyze_button.setEnabled(false)
+			@analyze_cancel_button.setEnabled(false)
 			@status_bar.setText("In t3KAIanalyze")
 			@t3klog.info("In t3kaibody")
 			jsonfile = "C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json"
@@ -832,6 +959,7 @@ class AnalyzeTask < Js::SwingWorker
 			result = t3kaijson["t3kairesultendpoint"]
 			workercount = t3kaijson["workerCount"]
 			workermemory = t3kaijson["workerMemory"]
+			analyzekindsarray = t3kaijson["analyzekinds"]
 
 			uploadendpoint = restserver + ":" + restport + "/" + upload
 			pollendpoint = restserver + ":" + restport + "/" + poll
@@ -846,9 +974,10 @@ class AnalyzeTask < Js::SwingWorker
 			
 
 			begin
-				exportfolder = t3kaijson["windowsexportlocation"]
+				exporttime = DateTime.now.strftime "%d%m%Y%H%M"
+				exportfolder = t3kaijson["windowsexportlocation"] + "\\" + exporttime
 				@t3klog.info("Exportfolder: #{exportfolder}")
-				linuxprocessingdir = t3kaijson["linuxprocessingdir"]
+				linuxprocessingdir = t3kaijson["linuxprocessingdir"] + "/" + exporttime
 				@t3klog.info("Linuxprocessingdir: #{linuxprocessingdir}")
 				t3kid = t3kaijson["t3kid"]
 				@t3klog.info("t3kid: #{t3kid}")
@@ -858,8 +987,9 @@ class AnalyzeTask < Js::SwingWorker
 				batchexportname = "'#{exportfolder}'"
 				@status_bar.setText("Exporting #{items.size} items to : #{exportfolder}")
 				@t3klog.info("Exporting #{items.size} items to : #{exportfolder}")
-
-				exporter = @utilities.createBatchExporter(exportfolder)
+				set_progress(25)
+				exporter = @utilities.createBatchExporter(exportfolder)	
+				exporter.setNumberingOptions({"createProductionSet" => false})
 				exporter.setParallelProcessingSettings({
 					:workerCount => workercount,
 					:workerMemory => workermemory,
@@ -901,6 +1031,7 @@ class AnalyzeTask < Js::SwingWorker
 
 				@status_bar.setText("Percent Complete: #{percentcomplete} : Analyzing #{processitem.getName}")
 				@t3klog.info("Percent complete: #{percentcomplete} : Analyizing #{processitem.getName}")
+				@progress_bar.set_value(percentcomplete)
 
 				itemguid = processitem.getGuid()
 				itemname = processitem.getName()
@@ -1021,33 +1152,42 @@ class AnalyzeTask < Js::SwingWorker
 					detections = ''
 					detections = resultsjson["detections"]["0"]
 					detectionscount = detections.count
-					@t3klog.info("Detections : #detection")
-					@t3klog.info("Detections Count: #detectionscount")
 					if detectionscount == 0
 						nomatch_count +=1
 						pollingitem.addTag("T3KAI Detection|Nothing to Report")
 					else
 						resultsjson["detections"]["0"].each do |detection|
 							match_count += 1
-							@t3klog.info("Detection : #{detection}")
 							if detection[0] == "None"
+								detectiontype = ''
+								detectionpercent = ''
 								detectionvalues = detection[2]
 								detectionvalues.each do |detectionvalue|
 									detectiontype = detectionvalue[0]
 									detectionpercent = detectionvalue[1]
-									@t3klog.info("Detection Type : #{detectiontype}")
-									@t3klog.info("Detetion Percent : #{detectionpercent}")
+									detectionpercent.delete! ' %'
+									@t3klog.info("None Detection : #{detection}")
+									@t3klog.info("None Detection Type : #{detectiontype}")
+									@t3klog.info("None Detection Percent : #{detectionpercent}")
+									if detectiontype != nil
+										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+										pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
+										custommetadata = pollingitem.getCustomMetadata
+										metadatavalue = custommetadata["t3kai-#{detectiontype}"]
+										if dectectionpercent > metadatavalue
+											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+										end
+									end
 									if nuixdetectionvalues == ''
 										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
 									else
-										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+										end 
 									end
 								end
-								@t3klog.info("Detection : #{detection}")
-								@t3klog.info("Detection Type : #{detection[0]}")
-								@t3klog.info("Detection Percent : #{detection[1]}")
-								pollingitem.addTag("T3KAI Detection|#{detection[0]}")
-								@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
+								pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
 							elsif detection[0] == nil
 								detectiontype = ''
 								detectionpercent = ''
@@ -1055,19 +1195,29 @@ class AnalyzeTask < Js::SwingWorker
 								detectionvalues.each do |detectionvalue|
 									detectiontype = detectionvalue[0]
 									detectionpercent = detectionvalue[1]
-									@t3klog.info("Detection Type : #{detectiontype}")
-									@t3klog.info("Detetion Percent : #{detectionpercent}")
+									detectionpercent.delete! ' %'
+									@t3klog.info("nil Detection : #{detection}")
+									@t3klog.info("nil Detection Type : #{detectiontype}")
+									@t3klog.info("nil Detection Percent : #{detectionpercent}")
+									if detectiontype != nil
+										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+										pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
+										custommetadata = pollingitem.getCustomMetadata
+										metadatavalue = custommetadata["t3kai-#{detectiontype}"]
+										if dectectionpercent > metadatavalue
+											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+										end
+									end
 									if nuixdetectionvalues == ''
 										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
 									else
-										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+										end 
 									end
 								end
-								@t3klog.info("Detection : #{detection}")
-								@t3klog.info("Detection Type : #{detection[0]}")
-								@t3klog.info("Detection Percent : #{detection[1]}")
-								pollingitem.addTag("T3KAI Detection|#{detection[0]}")
-								@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
+								pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
 							elsif detection[0] == "nil"
 								detectiontype = ''
 								detectionpercent = ''
@@ -1075,26 +1225,53 @@ class AnalyzeTask < Js::SwingWorker
 								detectionvalues.each do |detectionvalue|
 									detectiontype = detectionvalue[0]
 									detectionpercent = detectionvalue[1]
-									@t3klog.info("Detection Type : #{detectiontype}")
-									@t3klog.info("Detetion Percent : #{detectionpercent}")
+									detectionpercent.delete! ' %'
+									@t3klog.info("nilstring Detection : #{detection}")
+									@t3klog.info("nilstring Detection Type : #{detectiontype}")
+									@t3klog.info("nilstring Detection Percent : #{detectionpercent}")
+									if detectiontype != nil
+										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+										pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
+										custommetadata = pollingitem.getCustomMetadata
+										metadatavalue = custommetadata["t3kai-#{detectiontype}"]
+										if dectectionpercent > metadatavalue
+											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+										end
+									end
 									if nuixdetectionvalues == ''
 										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
 									else
-										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+										end 
 									end
 								end
-								@t3klog.info("Detection : #{detection}")
-								@t3klog.info("Detection Type : #{detection[0]}")
-								@t3klog.info("Detection Percent : #{detection[1]}")
-								pollingitem.addTag("T3KAI Detection|#{detection[0]}")
-								@status_bar.setText("T3KAI Detection Type: #{detection[0]} : perecent: #{detection[1]}")
+								pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
 							else
 								detectiontype = detection[0]
 								detectionpercent = detection[1]
-								@t3klog.info("Detection Value : #{detection[0]}")
-								@t3klog.info("Detection Percent : #{detection[1]}")
-								pollingitem.getCustomMetadata["t3kairesult"] = "Match Detected"
-								pollingitem.getCustomMetadata["t3kaidetection"] = "#{detectiontype} - #{detectionpercent}"
+								detectionpercent.delete! ' %'
+								@t3klog.info("notnullornil Detection Value : #{detectiontype}")
+								@t3klog.info("notnullornil Detection Percent : #{detectionpercent}")
+								if nuixdetectionvalues == ''
+									nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
+								else
+									if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+										nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+									end 
+								end
+								if detectiontype != nil
+									pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+									pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+									pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
+									custommetadata = pollingitem.getCustomMetadata
+									metadatavalue = custommetadata["t3kai-#{detectiontype}"]
+									if dectectionpercent > metadatavalue
+										pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+									end
+								end
+								pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
 							end
 						end
 					end
@@ -1109,26 +1286,72 @@ class AnalyzeTask < Js::SwingWorker
 				@status_bar.setText("Response code #{responsecode}")
 				@t3klog.info("T3KAI Repsonse code #{responsecode}")
 			end
-
-			end		
-		rescue => ecp
-			Js::JOptionPane.showMessageDialog(@program, "Exception - t3KAIanalyze: #{ecp.message}");
-			@t3klog.info("Exception - t3kAIanalyze: #{ecp.message}")
-			@t3klog.info("Exception - t3kAIanalyze: #{ecp.backtrace}")
-			@t3klog.info("Exception - t3kAIanalyze: #{ecp.class.name}")
-			@doneState = "error"
-		ensure
-			@processingStatsCompleteValue.setText(finished_count.to_s)
-			@processingStatsErrorValue.setText(error_count.to_s)
-			@processingStatsDetectionsValue.setText(match_count.to_s)
-			@processingStatsNoDetectionsValue.setText(nomatch_count.to_s)
-			@status_bar.setText("Analyze Complete: #{@analyze_items.size} items")
-			t3kaijsonfile = File.read('C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json')
-			t3kaijsonstring = JSON.parse(t3kaijsonfile)
-			t3kaijsonstring['t3kid'] = t3kid.to_i
-			File.write('C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json', JSON.pretty_generate(t3kaijsonstring))
-			@program.set_cursor(Ja::Cursor.getPredefinedCursor(Ja::Cursor::DEFAULT_CURSOR))
+		end		
+	rescue => ecp
+		Js::JOptionPane.showMessageDialog(@program, "Exception - t3KAIanalyze: #{ecp.message}");
+		@t3klog.info("Exception - t3kAIanalyze: #{ecp.message}")
+		@t3klog.info("Exception - t3kAIanalyze: #{ecp.backtrace}")
+		@t3klog.info("Exception - t3kAIanalyze: #{ecp.class.name}")
+		@doneState = "error"
+	ensure
+		nomatchdetection = @current_case.count("tag:" + "\"T3KAI Detection|Nothing to Report\"")
+		@processingStatsNoDetectionsValue.setText("#{nomatchdetection}")
+		analyzedstring = ''
+		detections = 0
+		analyzekindsarray = analyzekinds.split(",")
+		analyzekindsarray.each do |analyzekind|
+			analyzedkindcount = $current_case.count("kind:#{analyzekind}")
+			if analyzedstring == ''
+				analyzedstring = "#{analyzekind}:#{analyzedkindcount}"
+			else
+				analyzedstring = analyzedstring + "," + "#{analyzekind}:#{analyzedkindcount}"
+			end
 		end
+		@processingStatsCompleteValue.setText(analyzedstring)
+
+		tags = @current_case.getAllTags
+		alltagsarray = []
+		detections = 0
+		tags.each do |tag|
+			@status_bar.setText("Processing Tag: #{tag}")
+			searchstring = "tag:" + "\"#{tag}\""
+			#puts "Searchstring : #{searchstring}"
+			tagcount =  @current_case.count("#{searchstring}")
+			detections = detections + tagcount
+			alltagsarray << "#{tag}:#{tagcount}"
+		end
+		icount = 0
+		alltagsarray.each do |tagname|
+			if icount == 2
+				alltagsstring = alltagsstring + "," + tagname + "\n"
+				icount = 0
+			else
+				icount += 1
+				if alltagsstring == ''
+					alltagsstring = tagname
+				else
+					alltagsstring = alltagsstring + "," + tagname
+				end
+			end
+		end
+		alltagsstring = alltagsarray.to_s
+
+		@processingStatsErrorValue.setText(error_count.to_s)
+		@processingStatsDetectionsValue.setText(detections.to_s)
+		@processingStatsNoDetectionsValue.setText(nomatchdetection.to_s)
+		@processingStatsTaggedItemsValue.setText(alltagsstring)
+		@status_bar.setText("Analyze Complete: #{@analyze_items.size} items")
+		#@progress_bar.set_value(100)
+		t3kaijsonfile = File.read('C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json')
+		t3kaijsonstring = JSON.parse(t3kaijsonfile)
+		t3kaijsonstring['t3kid'] = t3kid.to_i
+		File.write('C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json', JSON.pretty_generate(t3kaijsonstring))
+		@program.set_cursor(Ja::Cursor.getPredefinedCursor(Ja::Cursor::DEFAULT_CURSOR))
+		FileUtils.rm_rf(exportfolder)
+		@analyze_button.setEnabled(true)
+		@analyze_cancel_button.setEnabled(true)
+		@analyze_cancel_button.setText("Close")
+	end
 end
 
 thread_invokeLater {
