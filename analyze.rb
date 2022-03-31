@@ -959,7 +959,7 @@ class AnalyzeTask < Js::SwingWorker
 			result = t3kaijson["t3kairesultendpoint"]
 			workercount = t3kaijson["workerCount"]
 			workermemory = t3kaijson["workerMemory"]
-			analyzekindsarray = t3kaijson["analyzekinds"]
+			@analyzekinds = t3kaijson["analyzekinds"]
 
 			uploadendpoint = restserver + ":" + restport + "/" + upload
 			pollendpoint = restserver + ":" + restport + "/" + poll
@@ -1175,7 +1175,11 @@ class AnalyzeTask < Js::SwingWorker
 										pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
 										custommetadata = pollingitem.getCustomMetadata
 										metadatavalue = custommetadata["t3kai-#{detectiontype}"]
-										if dectectionpercent > metadatavalue
+										if metadatavalue != nil
+											if detectionpercent > metadatavalue
+												pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+											end
+										else
 											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
 										end
 									end
@@ -1205,7 +1209,11 @@ class AnalyzeTask < Js::SwingWorker
 										pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
 										custommetadata = pollingitem.getCustomMetadata
 										metadatavalue = custommetadata["t3kai-#{detectiontype}"]
-										if dectectionpercent > metadatavalue
+										if metadatavalue != nil
+											if detectionpercent > metadatavalue
+												pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+											end
+										else
 											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
 										end
 									end
@@ -1235,7 +1243,11 @@ class AnalyzeTask < Js::SwingWorker
 										pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
 										custommetadata = pollingitem.getCustomMetadata
 										metadatavalue = custommetadata["t3kai-#{detectiontype}"]
-										if dectectionpercent > metadatavalue
+										if metadatavalue != nil
+											if detectionpercent > metadatavalue
+												pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+											end
+										else
 											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
 										end
 									end
@@ -1267,7 +1279,11 @@ class AnalyzeTask < Js::SwingWorker
 									pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
 									custommetadata = pollingitem.getCustomMetadata
 									metadatavalue = custommetadata["t3kai-#{detectiontype}"]
-									if detectionpercent > metadatavalue
+									if metadatavalue != nil
+										if detectionpercent > metadatavalue
+											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+										end
+									else
 										pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
 									end
 								end
@@ -1289,7 +1305,6 @@ class AnalyzeTask < Js::SwingWorker
 		end		
 	rescue => ecp
 		Js::JOptionPane.showMessageDialog(@program, "Exception - t3KAIanalyze: #{ecp.message}");
-		@t3klog.info("Exception - t3kAIanalyze: #{ecp.message}")
 		@t3klog.info("Exception - t3kAIanalyze: #{ecp.backtrace}")
 		@t3klog.info("Exception - t3kAIanalyze: #{ecp.class.name}")
 		@doneState = "error"
@@ -1298,9 +1313,11 @@ class AnalyzeTask < Js::SwingWorker
 		@processingStatsNoDetectionsValue.setText("#{nomatchdetection}")
 		analyzedstring = ''
 		detections = 0
-		analyzekindsarray = analyzekinds.split(",")
+		@t3klog.info("Analyze Kinds: #{@analyzekinds}")
+		analyzekindsarray = @analyzekinds.split(",")
+		@t3klog.info("Analyze Kinds: #{analyzekindsarray}")
 		analyzekindsarray.each do |analyzekind|
-			analyzedkindcount = $current_case.count("kind:#{analyzekind}")
+			analyzedkindcount = @current_case.count("kind:#{analyzekind}")
 			if analyzedstring == ''
 				analyzedstring = "#{analyzekind}:#{analyzedkindcount}"
 			else
@@ -1320,7 +1337,9 @@ class AnalyzeTask < Js::SwingWorker
 			detections = detections + tagcount
 			alltagsarray << "#{tag}:#{tagcount}"
 		end
+		@t3klog.info("All tags array : #{alltagsarray.to_s}")
 		icount = 0
+		alltagsstring = ''
 		alltagsarray.each do |tagname|
 			if icount == 2
 				alltagsstring = alltagsstring + "," + tagname + "\n"
