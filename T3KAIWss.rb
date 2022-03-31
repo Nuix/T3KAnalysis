@@ -11,16 +11,19 @@ require 'fileutils'
 require 'date'
 	
 def nuixWorkerItemCallback(worker_item)
-	exportpath = "C:/T3KAI/images"
 	analyzekindsarray = []
 	t3kaijsonfile = File.read('C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json')
 	t3kaijsonstring = JSON.parse(t3kaijsonfile)
 	analyzekinds = t3kaijsonstring['analyzekinds']
 	analyzekindsarray = analyzekinds.split(",")
 	puts "Analyze kinds array Count #{analyzekindsarray.size}"
-	exportdirectory = t3kaijsonstring['windowsexportlocation']
+	exporttime = DateTime.now.strftime "%d%m%Y%H%M"
+#	exportdirectory = t3kaijsonstring["windowsexportlocation"] + "\\" + exporttime
+	exportdirectory = t3kaijsonstring["windowsexportlocation"]
 	puts "Windows Export Directory: '#{exportdirectory}'"
+#	linuxprocessingdir = t3kaijsonstring["linuxprocessingdir"] + "/" + exporttime
 	linuxprocessingdir = t3kaijsonstring["linuxprocessingdir"]
+	puts "Linux Processing Directory: '#{linuxprocessingdir}'"
 
 	restserver = t3kaijsonstring["t3kairestserver"]
 	restport = t3kaijsonstring["t3kairestport"]
@@ -99,7 +102,6 @@ def nuixWorkerItemCallback(worker_item)
 			puts "Response Body: #{responsebody}"
 			begin
 				if responsecode == '200'
-					
 					pollingitem = worker_item
 					responsebodyvalues = JSON.parse(responsebody)
 					responsebodyvalues.each do |responseid, responsepath|
@@ -131,12 +133,19 @@ def nuixWorkerItemCallback(worker_item)
 					resultresponse = Net::HTTP.get_response(resulturi)
 					resultsjson = JSON.parse(resultresponse.body)
 					puts "Results JSON: #{resultsjson}"
-					nuixdetectionvalues = ''
+					detectionmap = {}
 					detections = ''
 					detections = resultsjson["detections"]["0"]
-					puts "Detections : #{detections}"
 					detectionscount = detections.count
-					puts "Detections Count: #{detectionscount}"
+					resulturi = URI.parse("#{resultendpoint}/#{@responseid}")
+#					resulturi = URI.parse("#{resultendpoint}/#{returnid}")
+					resultresponse = Net::HTTP.get_response(resulturi)
+					resultsjson = JSON.parse(resultresponse.body)
+					nuixdetectionvalues = ''
+					
+					detections = ''
+					detections = resultsjson["detections"]["0"]
+					detectionscount = detections.count
 					if detectionscount == 0
 						nomatch_count +=1
 						pollingitem.addTag("T3KAI Detection|Nothing to Report")
@@ -145,66 +154,138 @@ def nuixWorkerItemCallback(worker_item)
 							match_count += 1
 							puts "Detection : #{detection}"
 							if detection[0] == "None"
+								detectiontype = ''
+								detectionpercent = ''
 								detectionvalues = detection[2]
 								detectionvalues.each do |detectionvalue|
 									detectiontype = detectionvalue[0]
 									detectionpercent = detectionvalue[1]
-									puts "Detection Type : #{detectiontype}"
-									puts "Detetion Percent : #{detectionpercent}"
+									detectionpercent.delete! ' %'
+									if detectionmap[detectiontype] == nil
+										detectionmap[detectiontype] = detectionpercent
+									end
+									mappercent = detectionmap[detectiontype]
+									if detectionpercent > mappercent
+										detectionmap[detectiontype] = detectionpercent
+									end
+									puts "None Detection : #{detection}"
+									puts "None Detection Type : #{detectiontype}"
+									puts "None Detection Percent : #{detectionpercent}"
+									puts "None Detection Map Percent: #{detectionmap[detectiontype]}"
+									if detectiontype != nil
+										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+										pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
+										pollingitem.addCustomMetadata("t3kai-#{detectiontype}", "#{detectionmap[detectiontype]}", "text", "user")
+									end
 									if nuixdetectionvalues == ''
 										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
 									else
-										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+										end 
 									end
 								end
-								pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-								pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
-								pollingitem.addCustomMetadata("t3kaidetection", "#{nuixdetectionvalues}", "text", "api")
+								pollingitem.addCustomMetadata("t3kresult", "#{nuixdetectionvalues}", "text", "user")
 							elsif detection[0] == nil
-								detectiontype = ""
-								detectionpercent = ""
+								detectiontype = ''
+								detectionpercent = ''
 								detectionvalues = detection[2]
 								detectionvalues.each do |detectionvalue|
 									detectiontype = detectionvalue[0]
 									detectionpercent = detectionvalue[1]
-									puts "Detection Type : #{detectiontype}"
-									puts "Detetion Percent : #{detectionpercent}"
+									detectionpercent.delete! ' %'
+									if detectionmap[detectiontype] == nil
+										detectionmap[detectiontype] = detectionpercent
+									end
+									mappercent = detectionmap[detectiontype]
+									if detectionpercent > mappercent
+										detectionmap[detectiontype] = detectionpercent
+									end
+									puts "nil Detection : #{detection}"
+									puts "nil Detection Type : #{detectiontype}"
+									puts "nil Detection Percent : #{detectionpercent}"
+									puts "nil Detection Map Percent: #{detectionmap[detectiontype]}"
+
+									if detectiontype != nil
+										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+										pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
+										pollingitem.addCustomMetadata("t3kai-#{detectiontype}", "#{detectionmap[detectiontype]}", "text", "user")
+									end
 									if nuixdetectionvalues == ''
 										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
 									else
-										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+										end 
 									end
 								end
-								pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-								pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
-								pollingitem.addCustomMetadata("t3kaidetection", "#{nuixdetectionvalues}", "text", "api")
+								pollingitem.addCustomMetadata("t3kresult", "#{nuixdetectionvalues}", "text", "user")
 							elsif detection[0] == "nil"
-								detectiontype = ""
-								detectionpercent = ""
+								detectiontype = ''
+								detectionpercent = ''
 								detectionvalues = detection[2]
 								detectionvalues.each do |detectionvalue|
 									detectiontype = detectionvalue[0]
 									detectionpercent = detectionvalue[1]
-									puts "Detection Type : #{detectiontype}"
-									puts "Detetion Percent : #{detectionpercent}"
+									if detectionmap[detectiontype] == nil
+										detectionmap[detectiontype] = detectionpercent
+									end
+									detectionpercent.delete! ' %'
+									mappercent = detectionmap[detectiontype]
+									if detectionpercent > mappercent
+										detectionmap[detectiontype] = detectionpercent
+									end
+									puts "nilstring Detection : #{detection}"
+									puts "nilstring Detection Type : #{detectiontype}"
+									puts "nilstring Detection Percent : #{detectionpercent}"
+									puts "nilstring Detection Map Percent: #{detectionmap[detectiontype]}"
+									if detectiontype != nil
+										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+										pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
+										pollingitem.addCustomMetadata("t3kai-#{detectiontype}", "#{detectionmap[detectiontype]}", "text", "user")
+									end
 									if nuixdetectionvalues == ''
 										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
 									else
-										nuixdetectionvalues = detectionvalues + "," + "#{detectiontype} - #{detectionpercent}"
+										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+										end 
 									end
 								end
-								pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-								pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
-								pollingitem.addCustomMetadata("t3kaidetection", "#{nuixdetectionvalues}", "text", "api")
+								pollingitem.addCustomMetadata("t3kresult", "#{nuixdetectionvalues}", "text", "user")
 							else
 								detectiontype = detection[0]
 								detectionpercent = detection[1]
-								puts "Detection Value : #{detection[0]}"
-								puts "Detection Percent : #{detection[1]}"
-
-								pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-								pollingitem.addCustomMetadata("t3kairesult", "Match Detected", "text", "api")
-								pollingitem.addCustomMetadata("t3kaidetection", "#{detectiontype} - #{detectionpercent}", "text", "api")
+								detectionpercent.delete! ' %'
+								if detectionmap[detectiontype] == nil
+									detectionmap[detectiontype] = detectionpercent
+								end
+								mappercent = detectionmap[detectiontype]
+								if detectionpercent > mappercent
+									detectionmap[detectiontype] = detectionpercent
+								end
+								puts "notnoneornil Detection : #{detection}"
+								puts "notnoneornil Detection Type : #{detectiontype}"
+								puts "notnoneornil Detection Percent : #{detectionpercent}"
+								puts "notnoneornil Detection Map Percent: #{detectionmap[detectiontype]}"
+								if nuixdetectionvalues == ''
+									nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
+								else
+									if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+										nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+									end 
+								end
+								if detectiontype != nil
+									pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+									pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+									puts "About to Add Custom Metadata:t3kai-#{detectiontype} - #{detectionpercent}"
+									pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
+									pollingitem.addCustomMetadata("t3kai-#{detectiontype}", "#{detectionmap[detectiontype]}", "text", "user")
+								end
+								pollingitem.addCustomMetadata("t3kresult", "#{nuixdetectionvalues}", "text", "user")
 							end
 						end
 					end
