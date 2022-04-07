@@ -4,6 +4,7 @@
   "t3kaiuploadendpoint": "upload",
   "t3kaipollendpoint": "poll",
   "t3kairesultendpoint": "result",
+  "t3kaibatchsizeupperlimit": 5000,
   "nuixServerType": "desktop",
   "nsmAddress": "",
   "registryServer": "",
