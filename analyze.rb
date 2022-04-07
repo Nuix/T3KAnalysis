@@ -324,6 +324,10 @@ class Primary < Js::JFrame
 		t3kairesultlabel.setText("T3KAI REST Result endpoint:")
 		t3kairesultBox=Js::JTextField.new()
 
+		t3kaibatchsizeupperlimitlabel = Js::JLabel.new()
+		t3kaibatchsizeupperlimitlabel.setText("T3KAI Batch Size Upper Limit:")
+		t3kaibatchsizeupperlimitBox=Js::JTextField.new()
+
 		t3kaiwindowsexportlabel = Js::JLabel.new()
 		t3kaiwindowsexportlabel.setText("Windows export location:")
 		t3kaiwindowsexportBox=Js::JTextField.new()
@@ -402,21 +406,25 @@ class Primary < Js::JFrame
 			uploadendpoint = t3kaiuploadBox.getText()
 			pollendpoint = t3kaipollBox.getText()
 			resultendpoint = t3kairesultBox.getText()
+			batchsizeupperlimit = t3kaibatchsizeupperlimitBox.getText()
 			windowsexportlocation = t3kaiwindowsexportBox.getText()
 			linuxprocessingdir = t3kailinuxprocessingdirBox.getText()
 			nuixworkerCount = t3kaiworkercountBox.getText()
 			nuixworkerMemory = t3kaiworkermemoryBox.getText()
+			batchsizeupperlimit = t3kaibatchsizeupperlimitBox.getText()
 			t3kid = t3kidBox.getText()
 			t3kaijsonstring['t3kairestserver'] = restserver 
 			t3kaijsonstring['t3kairestport'] = restport
 			t3kaijsonstring['t3kaiuploadendpoint'] = uploadendpoint
 			t3kaijsonstring['t3kaipollendpoint'] = pollendpoint
 			t3kaijsonstring['t3kairesultendpoint'] = resultendpoint
+			t3kaijsonstring['t3kaibatchsizeupperlimit'] = batchsizeupperlimit
 			t3kaijsonstring['windowsexportlocation'] = windowsexportlocation
 			t3kaijsonstring['linuxprocessingdir'] = linuxprocessingdir
 			t3kaijsonstring['workerCount'] = nuixworkerCount.to_i
 			t3kaijsonstring['workerMemory'] = nuixworkerMemory.to_i
 			t3kaijsonstring['t3kid'] = t3kid.to_i
+			t3kaijsonstring['t3kaibatchsizeupperlimit'] = batchsizeupperlimit.to_i
 			
 			File.write('C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json', JSON.pretty_generate(t3kaijsonstring))
 			@status_bar.setText("Settings Successfully updated")
@@ -439,6 +447,8 @@ class Primary < Js::JFrame
 		settingsPanel.add t3kaipolllabel
 		settingsPanel.add t3kaipollBox
 		settingsPanel.add t3kairesultlabel
+		settingsPanel.add t3kaibatchsizeupperlimitBox
+		settingsPanel.add t3kaibatchsizeupperlimitlabel
 		settingsPanel.add t3kairesultBox
 		settingsPanel.add t3kaiwindowsexportlabel
 		settingsPanel.add t3kaiwindowsexportBox
@@ -465,6 +475,8 @@ class Primary < Js::JFrame
 				.addComponent(t3kaipollBox, 18, 18, 18)
 				.addComponent(t3kairesultlabel, 18, 18, 18)
 				.addComponent(t3kairesultBox, 18, 18, 18)
+				.addComponent(t3kaibatchsizeupperlimitlabel, 18, 18, 18)
+				.addComponent(t3kaibatchsizeupperlimitBox, 18, 18, 18)
 				.addComponent(t3kaiwindowsexportlabel, 18, 18, 18)
 				.addComponent(t3kaiwindowsexportBox, 18, 18, 18)
 				.addComponent(t3kailinuxprocessingdirlabel, 18, 18, 18)
@@ -492,6 +504,8 @@ class Primary < Js::JFrame
 				.addComponent(t3kaipollBox, 380, 380, 380)
 				.addComponent(t3kairesultlabel, 380, 380, 380)
 				.addComponent(t3kairesultBox, 380, 380, 380)
+				.addComponent(t3kaibatchsizeupperlimitlabel, 380, 380, 380)
+				.addComponent(t3kaibatchsizeupperlimitBox,380, 380, 380)
 				.addComponent(t3kaiwindowsexportlabel, 380, 380, 380)
 				.addComponent(t3kaiwindowsexportBox, 380, 380, 380)
 				.addComponent(t3kailinuxprocessingdirlabel, 380, 380, 380)
@@ -615,6 +629,7 @@ class Primary < Js::JFrame
 		uploadendpointstring = t3kaijsonstring['t3kaiuploadendpoint']
 		pollendpointstring = t3kaijsonstring['t3kaipollendpoint']
 		resultendpointstring = t3kaijsonstring['t3kairesultendpoint']
+		batchsizeupperlimit = t3kaijsonstring['t3kaibatchsizeupperlimit']
 		windowsexportlocation = t3kaijsonstring['windowsexportlocation']
 		linuxprocessingdir = t3kaijsonstring['linuxprocessingdir']
 		workercount = t3kaijsonstring['workerCount']
@@ -627,6 +642,7 @@ class Primary < Js::JFrame
 		t3kaiuploadBox.setText(uploadendpointstring)
 		t3kaipollBox.setText(pollendpointstring)
 		t3kairesultBox.setText(resultendpointstring)
+		t3kaibatchsizeupperlimitBox.setText(batchsizeupperlimit.to_s)
 		t3kaiwindowsexportBox.setText(windowsexportlocation)
 		t3kailinuxprocessingdirBox.setText(linuxprocessingdir)
 		t3kaiworkercountBox.setText(workercount.to_s)
@@ -944,6 +960,7 @@ class AnalyzeTask < Js::SwingWorker
 			finished_count = 0
 			match_count = 0
 			nomatch_count = 0
+			t3kbatches = {}
 				
 			@analyze_button.setEnabled(false)
 			@analyze_cancel_button.setEnabled(false)
@@ -957,6 +974,7 @@ class AnalyzeTask < Js::SwingWorker
 			upload = t3kaijson["t3kaiuploadendpoint"]
 			poll = t3kaijson["t3kaipollendpoint"]
 			result = t3kaijson["t3kairesultendpoint"]
+			batchsizeupperlimit = t3kaijson["t3kaibatchsizeupperlimit"]
 			workercount = t3kaijson["workerCount"]
 			workermemory = t3kaijson["workerMemory"]
 			@analyzekinds = t3kaijson["analyzekinds"]
@@ -969,9 +987,9 @@ class AnalyzeTask < Js::SwingWorker
 			@t3klog.info("T3KAI upload: #{upload}")
 			@t3klog.info("T3KAI poll: #{poll}")
 			@t3klog.info("T3KAI result: #{result}")
+			@t3klog.info("T3KAI batch size upper limit: #{batchsizeupperlimit}")
 			@t3klog.info("Nuix Export worker count: #{workercount}")
 			@t3klog.info("Nuix Export worker memory: #{workermemory}")
-			
 
 			begin
 				exporttime = DateTime.now.strftime "%d%m%Y%H%M"
@@ -981,7 +999,6 @@ class AnalyzeTask < Js::SwingWorker
 				@t3klog.info("Linuxprocessingdir: #{linuxprocessingdir}")
 				t3kid = t3kaijson["t3kid"]
 				@t3klog.info("t3kid: #{t3kid}")
-#				case_name = @current_case.getName().strip
 				rightnow = DateTime.now.to_s
 				rightnow = rightnow.delete(':')
 				batchexportname = "'#{exportfolder}'"
@@ -1014,19 +1031,25 @@ class AnalyzeTask < Js::SwingWorker
 			@status_bar.setText("items exported")
 			@t3klog.info("items exported")
 			
-			#nativesdir = exportfolder + "\\NATIVE"
 			nativesdir = exportfolder
 
 			icount = 0
+			ibatchcount = 0
+			ibatchcounter = 0
+			batchcomplete = false
+
 			idmap = {}
 			t3kidmap = {}
+			t3kbatches = {}
 			t3kaibody = ""
 			items.each do |processitem|
 				icount +=1
+				if batchsizeupperlimit == 0
+					batchsizeupperlimit = items.size
+				end
+				
 				percentcomplete = icount.fdiv(items.size)  * 100
 				percentcomplete = percentcomplete.round()
-#				Js::JOptionPane.showMessageDialog(@program, "Percent Complete: #{percentcomplete}: icount: #{icount} : item size: #{items.size}");
-
 				set_progress(percentcomplete)
 
 				@status_bar.setText("Percent Complete: #{percentcomplete} : Analyzing #{processitem.getName}")
@@ -1046,25 +1069,54 @@ class AnalyzeTask < Js::SwingWorker
 				searchfiles = searchfiles.gsub("\\","/")
 				exportfolder = exportfolder.gsub("\\","/")
 				@t3klog.info("Search Files: #{searchfiles}")
-
 				Dir.glob(searchfiles).each do |search_file|
-					extension = File.extname(search_file)
-					@t3klog.info("Search File: #{search_file}")
-					pathtoimage = search_file.gsub(exportfolder, linuxprocessingdir)
-					pathtoimage = pathtoimage.gsub("\\","/")
-					@t3klog.info("Path To Image: #{pathtoimage}")
-
-					t3kid +=1
-#					t3kaibody = '{"id":"' + "#{t3kid}" + '"file_path":' + "#{pathtoimage}" + '"}'
-					if t3kaibody == ""
-						t3kaibody = t3kaibody +  "\"#{t3kid}\"" + ":" + "\"#{pathtoimage}\""
+					if ibatchcounter <= batchsizeupperlimit
+						@t3klog.info("Counter: #{ibatchcounter} : Batch Size Upper Limit: #{batchsizeupperlimit}")
+						extension = File.extname(search_file)
+						@t3klog.info("Search File: #{search_file}")
+						pathtoimage = search_file.gsub(exportfolder, linuxprocessingdir)
+						pathtoimage = pathtoimage.gsub("\\","/")
+						@t3klog.info("Path To Image: #{pathtoimage}")
+						t3kid +=1
+						if t3kaibody == ""
+							t3kaibody = t3kaibody +  "\"#{t3kid}\"" + ":" + "\"#{pathtoimage}\""
+						else
+							t3kaibody = t3kaibody + "," + "\"#{t3kid}\"" + ":" + "\"#{pathtoimage}\""
+						end
+						idmap.store("#{t3kid}", "#{itemguid}")
+						ibatchcounter +=1
+						batchcomplete = false
 					else
-						t3kaibody = t3kaibody + "," + "\"#{t3kid}\"" + ":" + "\"#{pathtoimage}\""
+						@t3klog.info("Storing batches in hash #{t3kaibody}")
+						t3kbatches.store(ibatchcount, t3kaibody)
+						@t3klog.info("Batches Size #{t3kbatches.size}")
+						ibatchcount += 1
+
+						extension = File.extname(search_file)
+						pathtoimage = search_file.gsub(exportfolder, linuxprocessingdir)
+						pathtoimage = pathtoimage.gsub("\\","/")
+
+						t3kid +=1
+						t3kaibody = ''
+						t3kaibody = t3kaibody +  "\"#{t3kid}\"" + ":" + "\"#{pathtoimage}\""
+						ibatchcounter = 0
+						batchcomplete = true
 					end
-					idmap.store("#{t3kid}", "#{itemguid}")
 				end
 			end
-			t3kaifullbody = '{' + t3kaibody + '}'
+
+			@t3klog.info("batchcomplete : #{batchcomplete}")
+			@t3klog.info("Total Batch size: #{t3kbatches.size}")
+			
+			if batchcomplete == false
+				t3kbatches.store(ibatchcount + 1, t3kaibody)
+			end
+			@t3klog.info("Total Batch size: #{t3kbatches.size}")
+		end		
+		sentkey = ''
+		t3kbatches.each do |key, value|
+			t3kaihashbody = value
+			t3kaifullbody = '{' + t3kaihashbody + '}'
 			@t3klog.info("T3KAI Body: #{t3kaifullbody}")
 			uri = URI.parse("#{uploadendpoint}")
 			request = Net::HTTP::Post.new(uri)
@@ -1072,7 +1124,6 @@ class AnalyzeTask < Js::SwingWorker
 			request["Accept"] = "application/json"
 			request.body = t3kaifullbody
 			t3kaifullbodyjson = JSON.parse(t3kaifullbody)
-#			request.body = t3kaibody.to_json
 			@t3klog.info("request body: #{request.body}")
 
 			req_options = {
@@ -1088,206 +1139,198 @@ class AnalyzeTask < Js::SwingWorker
 			@t3klog.info("Response Body: #{responsebody}")
 
 			@status_bar.setText("Response code: '#{responsecode}' : responsebody:'#{responsebody}'")
-			@t3klog.info("Response code: '#{responsecode}' : responsebody:'#{responsebody}'")
-			responsebodyjson = JSON.parse(responsebody)
-			@t3klog.info("response body json #{responsebodyjson}")
-			responsebodyjson.each do |returnkey, returnvalue|
-				@t3klog.info("Response Body Key: #{returnkey} : Value: #{returnvalue}")
-				t3kaifullbodyjson.each do |sentkey, sentvalue|
-					@t3klog.info("Full Body JSON Key: #{sentkey} : Value: #{sentvalue}")
-					if sentvalue == returnvalue
-						@t3klog.info("Sent Value and Return Value equal: Sent Value #{sentvalue} : Return Key: #{returnvalue}")
-						t3kidmap.store(sentkey, returnkey)
-					end
-				end
-			end
-			t3kidmap.each do |sendid, returnid|
-				@t3klog.info("T3K Send ID : #{sendid} : TK3 Return ID: #{returnid}")
-			end
 			if responsecode == '200'
-				@status_bar.setText("Successfully sent #{items.size} to T3KAI")
-				@t3klog.info("Successfully sent #{items.size} to T3KAI")
+				responsebodyjson = JSON.parse(responsebody)
+				@t3klog.info("response body json #{responsebodyjson}")
+				responsebodyjson.each do |returnkey, returnvalue|
+					sentkey = t3kaifullbodyjson.key(returnvalue)
+					t3kidmap.store(sentkey, returnkey)
+				end
+				
+				@status_bar.setText("Successfully sent #{t3kaifullbodyjson.size} to T3KAI")
 				t3kidmap.each do |sendid, returnid|
 					pollguid = idmap["#{sendid}"]
-					@t3klog.info("Poll GUID: #{pollguid}")
-					pollingitems = @current_case.search("guid:#{pollguid}")
-					pollingitem = pollingitems[0]
-					@t3klog.info("Poll ID: #{returnid} : Poll GUID: #{pollguid} : Poll Item: #{pollingitem.getName()}")
-					polluri = URI.parse("#{pollendpoint}/#{returnid}")
-					
-					resulttype = ''
-					doneprocessing = false
-					@status_bar.setText("Polling T3KAI: #{responsebody}")
-					@t3klog.info("Polling T3KAI: #{pollendpoint}/#{returnid}")
-					until doneprocessing == true do
-						pollresponse = Net::HTTP.get_response(polluri)
-						polljson = JSON.parse(pollresponse.body)
-						id = polljson["id"]
-						filepath = polljson["filepath"]
-						finished = polljson["finished"]
-						pending = polljson["pending"]
-						error = polljson["error"]
-						broken_media = ["BROKEN_MEDIA"]
-						resulttype = polljson["resulttype"]
-						if error == true
-							@status_bar.setText("Error processing #{filepath} : #{broken_media}")
-							@t3klog.error("Error processing #{filepath} : #{broken_media}")
-							error_count += 1
-							doneprocessing = true
+					if pollguid != nil
+						pollingitems = @current_case.search("guid:#{pollguid}")
+						pollingitem = pollingitems[0]
+						@t3klog.info("Poll ID: #{returnid} : Poll GUID: #{pollguid} : Poll Item: #{pollingitem.getName()}")
+						polluri = URI.parse("#{pollendpoint}/#{returnid}")
+						resulttype = ''
+						doneprocessing = false
+						@status_bar.setText("Polling T3KAI: #{responsebody}")
+						@t3klog.info("Polling T3KAI: #{pollendpoint}/#{returnid}")
+						until doneprocessing == true do
+							pollresponse = Net::HTTP.get_response(polluri)
+							polljson = JSON.parse(pollresponse.body)
+							id = polljson["id"]
+							filepath = polljson["filepath"]
+							finished = polljson["finished"]
+							pending = polljson["pending"]
+							error = polljson["error"]
+							broken_media = ["BROKEN_MEDIA"]
+							resulttype = polljson["resulttype"]
+							if error == true
+								@status_bar.setText("Error processing #{filepath} : #{broken_media}")
+								@t3klog.error("Error processing #{filepath} : #{broken_media}")
+								error_count += 1
+								doneprocessing = true
+							end
+							if finished == true
+								@status_bar.setText("Completed is true")
+								@t3klog.info("Complete")
+								finished_count += 1
+								doneprocessing = true
+							end
 						end
-						if finished == true
-							@status_bar.setText("Completed is true")
-							@t3klog.info("Complete")
-							finished_count += 1
-							doneprocessing = true
-						end
-					end
-					@status_bar.setText("Processing done")
-					@t3klog.info("Processing done")
-					@t3klog.info("Getting Results from : #{resultendpoint}/#{returnid}")
-					resulturi = URI.parse("#{resultendpoint}/#{returnid}")
-					resultresponse = Net::HTTP.get_response(resulturi)
-					resultsjson = JSON.parse(resultresponse.body)
-					nuixdetectionvalues = ''
-					detections = ''
-					detections = resultsjson["detections"]["0"]
-					detectionscount = detections.count
-					if detectionscount == 0
-						nomatch_count +=1
-						pollingitem.addTag("T3KAI Detection|Nothing to Report")
-					else
-						resultsjson["detections"]["0"].each do |detection|
-							match_count += 1
-							if detection[0] == "None"
-								detectiontype = ''
-								detectionpercent = ''
-								detectionvalues = detection[2]
-								detectionvalues.each do |detectionvalue|
-									detectiontype = detectionvalue[0]
-									detectionpercent = detectionvalue[1]
-									detectionpercent.delete! ' %'
-									@t3klog.info("None Detection : #{detection}")
-									@t3klog.info("None Detection Type : #{detectiontype}")
-									@t3klog.info("None Detection Percent : #{detectionpercent}")
-									if detectiontype != nil
-										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
-										pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
-										custommetadata = pollingitem.getCustomMetadata
-										metadatavalue = custommetadata["t3kai-#{detectiontype}"]
-										if metadatavalue != nil
-											if detectionpercent > metadatavalue
-												pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
-											end
-										else
-											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
-										end
-									end
-									if nuixdetectionvalues == ''
-										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
-									else
-										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
-											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
-										end 
-									end
-								end
-								pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
-							elsif detection[0] == nil
-								detectiontype = ''
-								detectionpercent = ''
-								detectionvalues = detection[2]
-								detectionvalues.each do |detectionvalue|
-									detectiontype = detectionvalue[0]
-									detectionpercent = detectionvalue[1]
-									detectionpercent.delete! ' %'
-									@t3klog.info("nil Detection : #{detection}")
-									@t3klog.info("nil Detection Type : #{detectiontype}")
-									@t3klog.info("nil Detection Percent : #{detectionpercent}")
-									if detectiontype != nil
-										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
-										pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
-										custommetadata = pollingitem.getCustomMetadata
-										metadatavalue = custommetadata["t3kai-#{detectiontype}"]
-										if metadatavalue != nil
-											if detectionpercent > metadatavalue
-												pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
-											end
-										else
-											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
-										end
-									end
-									if nuixdetectionvalues == ''
-										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
-									else
-										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
-											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
-										end 
-									end
-								end
-								pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
-							elsif detection[0] == "nil"
-								detectiontype = ''
-								detectionpercent = ''
-								detectionvalues = detection[2]
-								detectionvalues.each do |detectionvalue|
-									detectiontype = detectionvalue[0]
-									detectionpercent = detectionvalue[1]
-									detectionpercent.delete! ' %'
-									@t3klog.info("nilstring Detection : #{detection}")
-									@t3klog.info("nilstring Detection Type : #{detectiontype}")
-									@t3klog.info("nilstring Detection Percent : #{detectionpercent}")
-									if detectiontype != nil
-										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
-										pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
-										custommetadata = pollingitem.getCustomMetadata
-										metadatavalue = custommetadata["t3kai-#{detectiontype}"]
-										if metadatavalue != nil
-											if detectionpercent > metadatavalue
-												pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
-											end
-										else
-											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
-										end
-									end
-									if nuixdetectionvalues == ''
-										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
-									else
-										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
-											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
-										end 
-									end
-								end
-								pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
+						if !error == true
+							@status_bar.setText("Processing done")
+							@t3klog.info("Processing done")
+							@t3klog.info("Getting Results from : #{resultendpoint}/#{returnid}")
+							resulturi = URI.parse("#{resultendpoint}/#{returnid}")
+							resultresponse = Net::HTTP.get_response(resulturi)
+							resultsjson = JSON.parse(resultresponse.body)
+							nuixdetectionvalues = ''
+							detections = ''
+							detections = resultsjson["detections"]["0"]
+							detectionscount = detections.count
+							if detectionscount == 0
+								nomatch_count +=1
+								pollingitem.addTag("T3KAI Detection|Nothing to Report")
 							else
-								detectiontype = detection[0]
-								detectionpercent = detection[1]
-								detectionpercent.delete! ' %'
-								@t3klog.info("notnullornil Detection Value : #{detectiontype}")
-								@t3klog.info("notnullornil Detection Percent : #{detectionpercent}")
-								if nuixdetectionvalues == ''
-									nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
-								else
-									if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
-										nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
-									end 
-								end
-								if detectiontype != nil
-									pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-									pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
-									pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
-									custommetadata = pollingitem.getCustomMetadata
-									metadatavalue = custommetadata["t3kai-#{detectiontype}"]
-									if metadatavalue != nil
-										if detectionpercent > metadatavalue
-											pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+								resultsjson["detections"]["0"].each do |detection|
+									match_count += 1
+									if detection[0] == "None"
+										detectiontype = ''
+										detectionpercent = ''
+										detectionvalues = detection[2]
+										detectionvalues.each do |detectionvalue|
+											detectiontype = detectionvalue[0]
+											detectionpercent = detectionvalue[1]
+											detectionpercent.delete! ' %'
+											@t3klog.info("None Detection : #{detection}")
+											@t3klog.info("None Detection Type : #{detectiontype}")
+											@t3klog.info("None Detection Percent : #{detectionpercent}")
+											if detectiontype != nil
+												pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+												pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+												pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
+												custommetadata = pollingitem.getCustomMetadata
+												metadatavalue = custommetadata["t3kai-#{detectiontype}"]
+												if metadatavalue != nil
+													if detectionpercent > metadatavalue
+														pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+													end
+												else
+													pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+												end
+											end
+											if nuixdetectionvalues == ''
+												nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
+											else
+												if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+													nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+												end 
+											end
 										end
+										pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
+									elsif detection[0] == nil
+										detectiontype = ''
+										detectionpercent = ''
+										detectionvalues = detection[2]
+										detectionvalues.each do |detectionvalue|
+											detectiontype = detectionvalue[0]
+											detectionpercent = detectionvalue[1]
+											detectionpercent.delete! ' %'
+											@t3klog.info("nil Detection : #{detection}")
+											@t3klog.info("nil Detection Type : #{detectiontype}")
+											@t3klog.info("nil Detection Percent : #{detectionpercent}")
+											if detectiontype != nil
+												pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+												pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+												pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
+												custommetadata = pollingitem.getCustomMetadata
+												metadatavalue = custommetadata["t3kai-#{detectiontype}"]
+												if metadatavalue != nil
+													if detectionpercent > metadatavalue
+														pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+													end
+												else
+													pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+												end
+											end
+											if nuixdetectionvalues == ''
+												nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
+											else
+												if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+													nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+												end 
+											end
+										end
+										pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
+									elsif detection[0] == "nil"
+										detectiontype = ''
+										detectionpercent = ''
+										detectionvalues = detection[2]
+										detectionvalues.each do |detectionvalue|
+											detectiontype = detectionvalue[0]
+											detectionpercent = detectionvalue[1]
+											detectionpercent.delete! ' %'
+											@t3klog.info("nilstring Detection : #{detection}")
+											@t3klog.info("nilstring Detection Type : #{detectiontype}")
+											@t3klog.info("nilstring Detection Percent : #{detectionpercent}")
+											if detectiontype != nil
+												pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+												pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+												pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
+												custommetadata = pollingitem.getCustomMetadata
+												metadatavalue = custommetadata["t3kai-#{detectiontype}"]
+												if metadatavalue != nil
+													if detectionpercent > metadatavalue
+														pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+													end
+												else
+													pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+												end
+											end
+											if nuixdetectionvalues == ''
+												nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
+											else
+												if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+													nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+												end 
+											end
+										end
+										pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
 									else
-										pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+										detectiontype = detection[0]
+										detectionpercent = detection[1]
+										detectionpercent.delete! ' %'
+										@t3klog.info("notnullornil Detection Value : #{detectiontype}")
+										@t3klog.info("notnullornil Detection Percent : #{detectionpercent}")
+										if nuixdetectionvalues == ''
+											nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
+										else
+											if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
+												nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
+											end 
+										end
+										if detectiontype != nil
+											pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+											pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
+											pollingitem.getCustomMetadata["t3kaidetection"] = "Match Detected"
+											custommetadata = pollingitem.getCustomMetadata
+											metadatavalue = custommetadata["t3kai-#{detectiontype}"]
+											if metadatavalue != nil
+												if detectionpercent > metadatavalue
+													pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+												end
+											else
+												pollingitem.getCustomMetadata["t3kai-#{detectiontype}"] = "#{detectionpercent}"
+											end
+										end	
+										pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
 									end
 								end
-								pollingitem.getCustomMetadata["t3kresult"] = "#{nuixdetectionvalues}"
 							end
 						end
 					end
@@ -1302,7 +1345,7 @@ class AnalyzeTask < Js::SwingWorker
 				@status_bar.setText("Response code #{responsecode}")
 				@t3klog.info("T3KAI Repsonse code #{responsecode}")
 			end
-		end		
+		end
 	rescue => ecp
 		Js::JOptionPane.showMessageDialog(@program, "Exception - t3KAIanalyze: #{ecp.message}");
 		@t3klog.info("Exception - t3kAIanalyze: #{ecp.backtrace}")
