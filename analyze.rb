@@ -252,6 +252,10 @@ class Primary < Js::JFrame
 			self.repaint
 		}
 
+		importCaseNameLabel = Js::JLabel.new()
+		importCaseNameLabel.setText("Case Name")
+		importCaseNameBox=Js::JTextField.new()
+		
 		importCancelButton = Js::JButton.new()
 		importCancelButton.setText("Cancel")
 		importCancelButton.setToolTipText("Cancel process")
@@ -266,8 +270,9 @@ class Primary < Js::JFrame
 		importButton.addActionListener { |e|
 			imagedirectory = fileSelectionBox.getText()
 			imagedirectory = imagedirectory.gsub("\\","\\\\")
-			
-			processtask = ProcessAndAnalyzeTask.new(self, importButton, importCancelButton, fileSelectionButton, statusBar, progressBar, utilities, imagedirectory, processingStatsPanel, @processingStatsCompleteValue, @processingStatsErrorValue, @processingStatsDetectionsValue, @processingStatsNoDetectionsValue, @processingStatsTaggedItemsValue, @t3klog)
+			casename = importCaseNameBox.getText()
+
+			processtask = ProcessAndAnalyzeTask.new(self, importButton, importCancelButton, fileSelectionButton, statusBar, progressBar, utilities, imagedirectory, processingStatsPanel, @processingStatsCompleteValue, @processingStatsErrorValue, @processingStatsDetectionsValue, @processingStatsNoDetectionsValue, @processingStatsTaggedItemsValue, casename, @t3klog)
 #			task.add_property_change_listener { |e2|
 #				if "progress" == e2.get_property_name
 #					progressBar.set_value(e2.get_new_value.to_i)
@@ -279,8 +284,11 @@ class Primary < Js::JFrame
 		
 		importPanel.add fileSelectionLabel
 		importPanel.add fileSelectionBox
+		importPanel.add importCaseNameLabel
+		importPanel.add importCaseNameBox
 		importPanel.add importButton
 		importPanel.add importCancelButton
+
 
 		#panelMain.add importButton
 		fieldLayout = Js::GroupLayout.new(importPanel)
@@ -289,6 +297,8 @@ class Primary < Js::JFrame
 				.addComponent(fileSelectionLabel, 18, 18, 18)
 				.addComponent(fileSelectionBox, 18, 18, 18)
 				.addComponent(fileSelectionButton, 18, 18, 18)
+				.addComponent(importCaseNameLabel, 18, 18, 18)
+				.addComponent(importCaseNameBox, 18, 18, 18)
 				.addComponent(importButton, 18, 18, 18)
 				.addComponent(importCancelButton, 18, 18, 18)
 		)
@@ -298,6 +308,8 @@ class Primary < Js::JFrame
 				.addComponent(fileSelectionLabel, 380, 380, 380)
 				.addComponent(fileSelectionBox, 380, 380, 380)
 				.addComponent(fileSelectionButton, 260, 260, 260)
+				.addComponent(importCaseNameLabel, 260, 260, 260)
+				.addComponent(importCaseNameBox, 260, 260, 260)
 				.addComponent(importButton, 260, 260, 260)
 				.addComponent(importCancelButton, 260, 260, 260)
 		)
@@ -391,7 +403,7 @@ class Primary < Js::JFrame
 		#add field for number of category to provide the case
 		#add field for getting tags in the case.
 		settingsButton = Js::JButton.new()
-		settingsButton.setText("Apply Settings:")
+		settingsButton.setText("Apply Settings")
 		settingsButton.setToolTipText("Apply settings to JSON file.")
 
 		settingsCancelButton = Js::JButton.new()
@@ -545,7 +557,7 @@ class Primary < Js::JFrame
 
 		processingStatsTaggedItemsLabel = Js::JLabel.new()
 		processingStatsTaggedItemsLabel.setText("Tagged Items:")
-		taggedItems = ["army_tank:3","gun:3","Nothing to Report:14"]
+		taggedItems = []
 		taggedItemsstring = taggedItems.to_s
 		taggedItemsstring = taggedItemsstring.gsub(",","\n")
 		@processingStatsTaggedItemsValue = Js::JTextArea.new(30, 30)
@@ -683,7 +695,7 @@ class Primary < Js::JFrame
 end
 
 class ProcessAndAnalyzeTask < Js::SwingWorker
-	def initialize(program, process_button, process_cancel_button, process_browse_button, status_bar, progress_bar, utilities, original_items, processingStatusPanel, processingStatsCompleteValue, processingStatusErrorValue, processingtatusDetectionsValue, processingStatsNoDetectionsValue, processingStatsTaggedItemsValue, t3klog)
+	def initialize(program, process_button, process_cancel_button, process_browse_button, status_bar, progress_bar, utilities, original_items, processingStatusPanel, processingStatsCompleteValue, processingStatusErrorValue, processingtatusDetectionsValue, processingStatsNoDetectionsValue, processingStatsTaggedItemsValue, casename, t3klog)
 		super()
 		@program = program
 		@process_button = process_button
@@ -699,6 +711,7 @@ class ProcessAndAnalyzeTask < Js::SwingWorker
 		@processingtatusDetectionsValue = processingtatusDetectionsValue
 		@processingStatsNoDetectionsValue = processingStatsNoDetectionsValue
 		@processingStatsTaggedItemsValue = processingStatsTaggedItemsValue
+		@casename = casename
 		@t3klog = t3klog
 	end
 	
@@ -757,7 +770,11 @@ class ProcessAndAnalyzeTask < Js::SwingWorker
 				@t3klog.info("Worker Side Script: #{worker_side_script}")
 				#######################################
 
-				case_name = 'T3KAI - ' + Time.now.strftime('%Y%d%m %H%M%S')
+				if @casename == nil
+					case_name = casebasename + Time.now.strftime('%Y%d%m %H%M%S')
+				else
+					case_name = @casename
+				end
 				@t3klog.info("Case Name: #{case_name}")
 
 				caseFactory = @utilities.getCaseFactory()
