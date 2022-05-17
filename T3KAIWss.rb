@@ -33,8 +33,17 @@ def nuixWorkerItemCallback(worker_item)
 		result = t3kaijsonstring["t3kairesultendpoint"]
 		workercount = t3kaijsonstring["workerCount"]
 		workermemory = t3kaijsonstring["workerMemory"]
+		retrycount = t3kaijsonstring["retrycount"]
 		rightnow = DateTime.now.to_s
 		rightnow = rightnow.delete(':')
+		puts "Rest Server: #{restserver}"
+		puts "Rest Port: #{restport}"
+		puts "Upload Endpoint: #{upload}"
+		puts "Poll Endpoint: #{poll}"
+		puts "Result Endpoint: #{result}"
+		puts "Worker Count: #{workercount}"
+		puts "Worker Memory: #{workermemory}"
+		puts "Retry Count: #{retrycount}"
 	
 		worker_item.setProcessItem(true)
 		source_item = worker_item.getSourceItem
@@ -59,255 +68,268 @@ def nuixWorkerItemCallback(worker_item)
 			if binary.nil?
 				puts "Binary has no data"
 			else
-				FileUtils.mkdir_p exportdirectory
-				binarydata = binary.getBinaryData
-				file = binarydata.copyTo(File.join(exportdirectory,item_guid + '.' + item_extension))
-				pathtoimage = exportdirectory + '/' + item_guid + '.' + item_extension
-				pathtoimage = pathtoimage.gsub(exportdirectory, linuxprocessingdir)
-				pathtoimage = pathtoimage.gsub("\\","/")
+				begin
+					FileUtils.mkdir_p exportdirectory
+					binarydata = binary.getBinaryData
+					file = binarydata.copyTo(File.join(exportdirectory,item_guid + '.' + item_extension))
+					pathtoimage = exportdirectory + '/' + item_guid + '.' + item_extension
+					pathtoimage = pathtoimage.gsub(exportdirectory, linuxprocessingdir)
+					pathtoimage = pathtoimage.gsub("\\","/")
 
-				puts "Path to Image: #{pathtoimage}"
-				uploadendpoint = restserver + ":" + restport + "/" + upload
-				pollendpoint = restserver + ":" + restport + "/" + poll
-				resultendpoint = restserver + ":" + restport + "/" + result
-				t3kid +=1
-				puts "t3Kid: #{t3kid}"
+					puts "Path to Image: #{pathtoimage}"
+					uploadendpoint = restserver + ":" + restport + "/" + upload
+					pollendpoint = restserver + ":" + restport + "/" + poll
+					resultendpoint = restserver + ":" + restport + "/" + result
+					t3kid +=1
+					puts "t3Kid: #{t3kid}"
 	
-#				t3kaibody = '{"id":"' + "#{t3kid}" + '"file_path":' + "#{pathtoimage}" + '"}'
-				t3kaibody = t3kaibody +  "\"#{t3kid}\"" + ":" + "\"#{pathtoimage}\""
-				t3kaifullbody = '{' + t3kaibody + '}'
-				puts "Upload Endpoint #{uploadendpoint}"
-				
-				uri = URI.parse("#{uploadendpoint}")
-				request = Net::HTTP::Post.new(uri)
-				request.content_type = "text/plain"
-				request["Accept"] = "application/json"
-				request.body = t3kaifullbody
-				t3kaifullbodyjson = JSON.parse(t3kaifullbody)
-				puts "Json Body: #{t3kaifullbody}"
-				req_options = {
-					use_ssl: uri.scheme == "https",
-				}
-				response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
-					http.request(request)
-				end
-				begin
-					t3kaijsonstring['t3kid'] = t3kid.to_i
-					File.write('C:\\ProgramData\\Nuix\\ProcessingFiles\\T3KAI\\T3KAI.json', JSON.pretty_generate(t3kaijsonstring))
-				rescue => ecp
-					puts "Exception - t3kAIanalyze: #{ecp.message}"
-					puts "Exception - t3kAIanalyze: #{ecp.backtrace}"
-					puts "Exception - t3kAIanalyze: #{ecp.class.name}"
-				end
-				responsecode = response.code
-				responsebody = response.body
-				puts "Response Body: #{responsebody}"
-				begin
-					if responsecode == '200'
-						pollingitem = worker_item
-						responsebodyvalues = JSON.parse(responsebody)
-						responsebodyvalues.each do |responseid, responsepath|
-							@responseid = responseid
-							@responsepath = responsepath
-						end
-						polluri = URI.parse("#{pollendpoint}/#{@responseid}")
+#					t3kaibody = '{"id":"' + "#{t3kid}" + '"file_path":' + "#{pathtoimage}" + '"}'
+					t3kaibody = t3kaibody +  "\"#{t3kid}\"" + ":" + "\"#{pathtoimage}\""
+					t3kaifullbody = '{' + t3kaibody + '}'
+					puts "Upload Endpoint #{uploadendpoint}"
+	
+					uri = URI.parse("#{uploadendpoint}")
+					request = Net::HTTP::Post.new(uri)
+					request.content_type = "text/plain"
+					request["Accept"] = "application/json"
+					request.body = t3kaifullbody
+					t3kaifullbodyjson = JSON.parse(t3kaifullbody)
+					puts "request body: #{request.body}"
 
-						resulttype = ''
-						doneprocessing = false
-						until doneprocessing == true do
-							pollresponse = Net::HTTP.get_response(polluri)
-							polljson = JSON.parse(pollresponse.body)
-							id = polljson["id"]
-							filepath = polljson["filepath"]
-							finished = polljson["finished"]
-							pending = polljson["pending"]
-							error = polljson["error"]
-							broken_media = ["BROKEN_MEDIA"]
-							resulttype = polljson["resulttype"]
-							if error == true
-								doneprocessing = true
+					req_options = {
+						use_ssl: uri.scheme == "https",
+					}
+					success=false
+					failcount = 0
+					while success == false && failcount < retrycount
+						puts "In Batches while loop"
+						begin
+							response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+								http.request(request)
 							end
-							if finished == true
-								doneprocessing = true
-							end
+							responsecode = response.code
+							responsebody = response.body
+							puts "Response Code: #{responsecode}"
+							puts "Response Body: #{responsebody}"
+							success = true
+						rescue => ecp1
+							failcount +=1
+							success=false
+							sleep 3
+							puts "Failcount : #{failcount}"
+							puts "Exception 1 - t3kAIanalyze: #{ecp1.backtrace}"
+							puts "Exception 1 - t3kAIanalyze: #{ecp1.class.name}"
 						end
-						resulturi = URI.parse("#{resultendpoint}/#{@responseid}")
-						resultresponse = Net::HTTP.get_response(resulturi)
-						resultsjson = JSON.parse(resultresponse.body)
-						puts "Results JSON: #{resultsjson}"
-						detectionmap = {}
-						detections = ''
-						detections = resultsjson["detections"]["0"]
-						detectionscount = detections.count
-						resulturi = URI.parse("#{resultendpoint}/#{@responseid}")
-#						resulturi = URI.parse("#{resultendpoint}/#{returnid}")
-						resultresponse = Net::HTTP.get_response(resulturi)
-						resultsjson = JSON.parse(resultresponse.body)
-						nuixdetectionvalues = ''
-					
-						detections = ''
-						detections = resultsjson["detections"]["0"]
-						detectionscount = detections.count
-						if detectionscount == 0
-							nomatch_count +=1
-							pollingitem.addTag("T3KAI Detection|Nothing to Report")
-						else
-							resultsjson["detections"]["0"].each do |detection|
-								match_count += 1
-								puts "Detection : #{detection}"
-								if detection[0] == "None"
-									detectiontype = ''
-									detectionpercent = ''
-									detectionvalues = detection[2]
-									detectionvalues.each do |detectionvalue|
-										detectiontype = detectionvalue[0]
-										detectionpercent = detectionvalue[1]
-										detectionpercent.delete! ' %'
-										if detectionmap[detectiontype] == nil
-											detectionmap[detectiontype] = detectionpercent
-										end
-										mappercent = detectionmap[detectiontype]
-										if detectionpercent > mappercent
-											detectionmap[detectiontype] = detectionpercent
-										end
-										puts "None Detection : #{detection}"
-										puts "None Detection Type : #{detectiontype}"
-										puts "None Detection Percent : #{detectionpercent}"
-										puts "None Detection Map Percent: #{detectionmap[detectiontype]}"
-										if detectiontype != nil
-											pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-											pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
-											pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
-											pollingitem.addCustomMetadata("t3kai-#{detectiontype}", "#{detectionmap[detectiontype]}", "text", "user")
-										end
-										if nuixdetectionvalues == ''
-											nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
-										else
-											if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
-												nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
-											end 
-										end
-									end
-									pollingitem.addCustomMetadata("t3kresult", "#{nuixdetectionvalues}", "text", "user")
-								elsif detection[0] == nil
-									detectiontype = ''
-									detectionpercent = ''
-									detectionvalues = detection[2]
-									detectionvalues.each do |detectionvalue|
-										detectiontype = detectionvalue[0]
-										detectionpercent = detectionvalue[1]
-										detectionpercent.delete! ' %'
-										if detectionmap[detectiontype] == nil
-											detectionmap[detectiontype] = detectionpercent
-										end
-										mappercent = detectionmap[detectiontype]
-										if detectionpercent > mappercent
-											detectionmap[detectiontype] = detectionpercent
-										end
-										puts "nil Detection : #{detection}"
-										puts "nil Detection Type : #{detectiontype}"
-										puts "nil Detection Percent : #{detectionpercent}"
-										puts "nil Detection Map Percent: #{detectionmap[detectiontype]}"
+					end
 
-										if detectiontype != nil
-											pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-											pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
-											pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
-											pollingitem.addCustomMetadata("t3kai-#{detectiontype}", "#{detectionmap[detectiontype]}", "text", "user")
+					if success == true
+						puts "Response code: '#{responsecode}'"
+						if responsecode == '200'
+							success = false
+							pollingitem = worker_item
+							responsebodyjson = JSON.parse(responsebody)
+							responsebodyvalues = JSON.parse(responsebody)
+							responsebodyvalues.each do |responseid, responsepath|
+								@responseid = responseid
+								@responsepath = responsepath
+							end
+							polluri = URI.parse("#{pollendpoint}/#{@responseid}")
+
+							resulttype = ''
+							while success == false && failcount < retrycount
+								begin
+									doneprocessing = false
+									puts "Polling T3KAI2: #{pollendpoint}/#{@responseid} : success: #{success} : failcount: #{failcount} : doneprocessing : #{doneprocessing}"
+									until doneprocessing == true do
+#											puts "In Polling Loop"
+										pollresponse = Net::HTTP.get_response(polluri)
+										polljson = JSON.parse(pollresponse.body)
+										puts "Poll JSON : #{polljson}"
+										id = polljson["id"]
+										filepath = polljson["filepath"]
+										finished = polljson["finished"]
+										pending = polljson["pending"]
+										error = polljson["error"]
+										broken_media = ["BROKEN_MEDIA"]
+										resulttype = polljson["resulttype"]
+										filenotfound = polljson["FILE_NOT_FOUND"]
+										puts "Polling response filepath : #{filepath} - finished : #{finished} - pending : #{pending} - error : #{error} - filenotfound : #{filenotfound}"
+										if error == true
+											puts "Error processing #{filepath} : #{broken_media}"
+											doneprocessing = true
 										end
-										if nuixdetectionvalues == ''
-											nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
-										else
-											if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
-												nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
-											end 
+										if finished == true
+											puts "Finished analyzing in T3K"
+											doneprocessing = true
 										end
+										success = true
+										sleep 5
 									end
-									pollingitem.addCustomMetadata("t3kresult", "#{nuixdetectionvalues}", "text", "user")
-								elsif detection[0] == "nil"
-									detectiontype = ''
-									detectionpercent = ''
-									detectionvalues = detection[2]
-									detectionvalues.each do |detectionvalue|
-										detectiontype = detectionvalue[0]
-										detectionpercent = detectionvalue[1]
-										if detectionmap[detectiontype] == nil
-											detectionmap[detectiontype] = detectionpercent
-										end
-										detectionpercent.delete! ' %'
-										mappercent = detectionmap[detectiontype]
-										if detectionpercent > mappercent
-											detectionmap[detectiontype] = detectionpercent
-										end
-										puts "nilstring Detection : #{detection}"
-										puts "nilstring Detection Type : #{detectiontype}"
-										puts "nilstring Detection Percent : #{detectionpercent}"
-										puts "nilstring Detection Map Percent: #{detectionmap[detectiontype]}"
-										if detectiontype != nil
-											pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-											pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
-											pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
-											pollingitem.addCustomMetadata("t3kai-#{detectiontype}", "#{detectionmap[detectiontype]}", "text", "user")
-										end
-										if nuixdetectionvalues == ''
-											nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
-										else
-											if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
-												nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
-											end 
-										end
-									end
-									pollingitem.addCustomMetadata("t3kresult", "#{nuixdetectionvalues}", "text", "user")
-								else
-									detectiontype = detection[0]
-									detectionpercent = detection[1]
-									detectionpercent.delete! ' %'
-									if detectionmap[detectiontype] == nil
-										detectionmap[detectiontype] = detectionpercent
-									end
-									mappercent = detectionmap[detectiontype]
-									if detectionpercent > mappercent
-										detectionmap[detectiontype] = detectionpercent
-									end
-									puts "notnoneornil Detection : #{detection}"
-									puts "notnoneornil Detection Type : #{detectiontype}"
-									puts "notnoneornil Detection Percent : #{detectionpercent}"
-									puts "notnoneornil Detection Map Percent: #{detectionmap[detectiontype]}"
-									if nuixdetectionvalues == ''
-										nuixdetectionvalues = "#{detectiontype} - #{detectionpercent}"
-									else
-										if !nuixdetectionvalues.include? "#{detectiontype} - #{detectionpercent}"
-											nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{detectiontype} - #{detectionpercent}"
-										end 
-									end
-									if detectiontype != nil
-										pollingitem.addTag("T3KAI Detection|#{detectiontype}")
-										pollingitem.addTag("T3KAI Detection|#{detectionpercent}")
-										puts "About to Add Custom Metadata:t3kai-#{detectiontype} - #{detectionpercent}"
-										pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
-										pollingitem.addCustomMetadata("t3kai-#{detectiontype}", "#{detectionmap[detectiontype]}", "text", "user")
-									end
-									pollingitem.addCustomMetadata("t3kresult", "#{nuixdetectionvalues}", "text", "user")
+								rescue => ecp2
+									failcount +=1
+									success=false
+									sleep 3
+									puts "Failcount : #{failcount}"
+									puts "Exception 2 - t3kAIanalyze: #{ecp2.backtrace}"
+									puts "Exception 2 - t3kAIanalyze: #{ecp2.class.name}"
 								end
 							end
+							if !error == true
+								success = false
+								failcount = 0
+								while success==false && failcount < retrycount
+									begin
+										success = true
+										nuixdetectionvalues = ""
+										detectioncount = 0
+										puts "Getting Results from : #{resultendpoint}/#{@responseid}"
+										resulturi = URI.parse("#{resultendpoint}/#{@responseid}")
+										resultresponse = Net::HTTP.get_response(resulturi)
+										resultsjson = JSON.parse(resultresponse.body)
+										detections = resultsjson["detections"]
+										puts "Results JSON : #{resultsjson}"
+										begin
+											resultsmd5 = resultsjson["metadata"]["md5"]
+											puts "Results MD5 : #{resultsmd5}"
+										rescue
+											puts "No Results MD5"
+										end
+										if resultsmd5 != nil
+											if pollingitem != nil
+												detectioncount = 0
+												itemdetections = {}
+												puts "Detections Count #{detections.count}"
+												if detections.count > 0
+													detections.each do |k,v|
+														t3kdetection = {}
+														detectioncount +=1
+														v.each do |key, value|
+															t3kdetection.store(key,value)
+														end
+														itemdetections.store(detectioncount, t3kdetection)
+													end 
+												else
+													pollingitem.addTag("T3KAI Detection|Nothing to Report")
+													puts "No detections available"
+												end
+												agemap = {}
+												gendermap = {}
+												gendercount = 0
+												agecount = 0
+												itemdetections.each do |key, value|
+													if value.size > 0
+														case value["type"]
+															when "age/gender"
+																gender = value["gender"]
+																age = value["age"]
+																score = value["score"]
+																box = value["box"]
+																info = value["info"]
+																puts "Gender : #{gender} - Age : #{age} - Score : #{score} - info : #{info} - Box : #{box}"
+																if !gendermap.key?(gender)
+																	puts "Adding #{gender} to gendermap"
+																	gendercount +=1
+																	gendermap.store(gendercount, gender)														
+																else
+																	puts "#{gender} already exists in gender store"
+																end
+																puts "Detection Age : #{age}"
+																if !agemap.key?(age)
+																	puts "Adding #{age} to agemap"
+																	agecount += 1
+																	agemap.store(agecount, age)															
+																else
+																	puts "#{age} already exists in agemap"
+																end
+																detectiontype = "person"
+																pollingitem.addTag("T3KAI Detection|#{detectiontype}")
+																pollingitem.addTag("T3KAI Detection|person|#{gender}")
+																pollingitem.addTag("T3KAI Detection|person|#{gender}|#{age}|#{score}")
+																pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
+																pollingitem.addCustomMetadata("t3kai-#{detectiontype}", "#{score}", "text", "user") 
+																puts "Person identified"
+															when "object"
+																classname = value["class_name"]
+																type = value["type"]
+																score = value["score"]
+																info = value["info"]
+																box = value["box"]
+																puts "Class Name: #{classname} - Type : #{type} - Score : #{score} - info : #{info} - Box : #{box}"
+																pollingitem.addTag("T3KAI Detection|#{classname}")
+																pollingitem.addTag("T3KAI Detection|#{classname}|#{score}")
+																pollingitem.addCustomMetadata("t3kaidetection", "Match Detected", "text", "user")
+																pollingitem.addCustomMetadata("t3kai-#{classname}", "#{score}", "text", "user") 
+																if nuixdetectionvalues == ''
+																	nuixdetectionvalues = "#{classname} - #{score}"
+																else
+																	if !nuixdetectionvalues.include? "#{classname} - #{score}"
+																		nuixdetectionvalues = nuixdetectionvalues + "\n" + "#{classname} - #{score}"
+																	end 
+																end
+																pollingitem.addCustomMetadata("t3kresult", "#{nuixdetectionvalues}", "text", "user")
+														end
+														genders = ""
+														gendermap.each do |genderk,genderv|
+															if genders == ""
+																genders = genderv
+															else
+																genders = genders + "," + genderv
+															end
+														end
+														puts "Genders : #{genders}"
+														ages = ""
+														agemap.each do |agesk, agesv|
+															if ages == ""
+																ages = agesv.to_s
+															else
+																ages = ages.to_s + "," + agesv.to_s
+															end
+														end
+														puts "Ages : #{ages}"
+														if genders != nil
+															pollingitem.addCustomMetadata("t3kai-gender", "#{genders}", "text", "user")
+														end
+														if ages != nil
+															pollingitem.addCustomMetadata("t3kai-ages", "#{ages}", "text", "user")
+														end
+													else
+														puts "No Detections"
+													end
+												end
+											else
+												puts "There is no Nuix item with MD5 : #{resultsmd5}"
+											end
+										else
+											puts "There is no MD5 in the results"
+										end
+									rescue => ecp3
+										failcount +=1
+										success=false
+										sleep 3
+										puts "Failcount : #{failcount}"
+										puts "Exception 3 - t3kAIanalyze: #{ecp3.backtrace}"
+										puts "Exception 3 - t3kAIanalyze: #{ecp3.class.name}"
+									end
+								end
+							else
+								puts "There was an error analyzing #{pollendpoint}/#{returnid}"
+							end
+						elsif responsecode == '400'
+							puts "T3KAI Repsonse code #{responsecode}"
+						elsif responsecode == '433'
+							puts "T3KAI Repsonse code #{responsecode}"
+						elsif responsecode == '500'
+							puts "T3KAI Repsonse code #{responsecode}"
+						else
+							puts "T3KAI Repsonse code #{responsecode}"
 						end
-					elsif responsecode == '400'
-						puts "Response code #{responsecode}"
-#						@status_bar.setText("Response code #{responsecode}")
-#						@t3klog.info("T3KAI Repsonse code #{responsecode}")
-					elsif responsecode == '433'
-						puts "Response code #{responsecode}"
-#						@status_bar.setText("Response code #{responsecode}")
-#						@t3klog.info("T3KAI Repsonse code #{responsecode}")
-					else
-						puts "Response code #{responsecode}"
-#						@status_bar.setText("Response code #{responsecode}")
-#						@t3klog.info("T3KAI Repsonse code #{responsecode}")
 					end
-				rescue => ecp
-					puts "Exception - t3kAIanalyze: #{ecp.message}"
-					puts "Exception - t3kAIanalyze: #{ecp.backtrace}"
-					puts "Exception - t3kAIanalyze: #{ecp.class.name}"
+				rescue => ecp1
+					puts "Exception1 - t3kAIanalyze: #{ecp1.message}"
+					puts "Exception1 - t3kAIanalyze: #{ecp1.backtrace}"
+					puts "Exception1 - t3kAIanalyze: #{ecp1.class.name}"
+				ensure
+#					FileUtils.rm_rf(exportdirectory)
 				end
 			end
 		end
@@ -315,7 +337,5 @@ def nuixWorkerItemCallback(worker_item)
 		puts "General Exception - t3kAIanalyze: #{ecp.message}"
 		puts "General Exception - t3kAIanalyze: #{ecp.backtrace}"
 		puts "General Exception - t3kAIanalyze: #{ecp.class.name}"
-	ensure
-		FileUtils.rm_rf(exportdirectory)
 	end
 end
