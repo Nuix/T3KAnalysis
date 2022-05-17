@@ -1,10 +1,11 @@
 {
-  "t3kairestserver": "http://172.25.241.25",
+  "t3kairestserver": "http://127.0.0.1",
   "t3kairestport": "5000",
   "t3kaiuploadendpoint": "upload",
   "t3kaipollendpoint": "poll",
   "t3kairesultendpoint": "result",
-  "t3kaibatchsizeupperlimit": 5000,
+  "t3kaibatchsizeupperlimit": 0,
+  "retrycount": 10,
   "nuixServerType": "desktop",
   "nsmAddress": "",
   "registryServer": "",
@@ -29,7 +30,7 @@
   "nuixLogLocation": "C:/Nuix_WORKING/Logs/T3KAI",
   "windowsexportlocation": "C:\\T3KAI\\images",
   "linuxprocessingdir": "/host/mnt/c/T3KAI/images",
-  "t3kid": 679,
+  "t3kid": 1045,
   "workerCount": 4,
   "workerMemory": 4096
 }
