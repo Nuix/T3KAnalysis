@@ -216,6 +216,11 @@ def nuixWorkerItemCallback(worker_item)
 												gendermap = {}
 												gendercount = 0
 												agecount = 0
+												documentpagearray = []
+												framenumberarray = []
+												framecount = 0
+												pagecount = 0
+
 												itemdetections.each do |key, value|
 													if value.size > 0
 														case value["type"]
@@ -254,6 +259,48 @@ def nuixWorkerItemCallback(worker_item)
 																score = value["score"]
 																info = value["info"]
 																box = value["box"]
+																data = value["data"]
+																puts "Class Name: #{classname} - Type : #{type} - Score : #{score} - info : #{info} - Box : #{box} - Data : #{data}"
+																puts "Data: #{data}"
+																if data != nil
+																	data.to_s.delete!('[]')
+																	fullarray = data.to_s.split(",")
+																	arraycount = 0
+																	fullarray.each do |arraystring|
+																		if arraystring = '"document_page_number"'
+																			documentpagenumber = fullarray[arraycount+1]
+																			if documentpagenumber != nil
+																				documentpagenumber.delete!("[")
+																				documentpagenumber.delete!("]")
+																				documentpagenumber.delete!('"')
+																				documentpagenumber.delete!("\\")
+																				if documentpagearray.include?(documentpagenumber)
+
+																				else
+																					if documentpagenumber != '" document_image_number"'
+																						documentpagearray << documentpagenumber
+																					end
+																				end
+																			end
+																			puts "Document Page Number : #{documentpagenumber} : Arraycount : #{arraycount}"
+																		elsif arraystring = '"frame"'
+																			framenumber = fullarray[arraycount+1]
+																			if framenumber != nil
+																				framenumber.delete!("[")
+																				framenumber.delete!("]")
+																				framenumber.delete!('"')
+																				framenumber.delete!("\\")
+																				if framepagearray.include?(framenumber)
+																			
+																				else
+																					framepagearray << framenumber
+																				end
+																			end
+																				puts "Frame Number : #{framenumber}: Arraycount : #{arraycount}"
+																		end
+																		arraycount +=1
+																	end
+																end
 																puts "Class Name: #{classname} - Type : #{type} - Score : #{score} - info : #{info} - Box : #{box}"
 																pollingitem.addTag("T3KAI Detection|#{classname}")
 																pollingitem.addTag("T3KAI Detection|#{classname}|#{score}")
@@ -292,6 +339,30 @@ def nuixWorkerItemCallback(worker_item)
 														if ages != nil
 															pollingitem.addCustomMetadata("t3kai-ages", "#{ages}", "text", "user")
 														end
+														puts "Frame Number Array Count '#{framenumberarray.count}'"
+														puts "Document Number Array Count '#{documentpagearray.count}'"
+
+														if framenumberarray.count > 0
+															pollingitem.addCustomMetadata("framenumbers","#{framenumberarray.to_s}", "text", "user")
+														end
+														documentpagevalues = ""
+														if documentpagearray.count > 0
+															documentpagearray.each do |pagearrayvalue|
+																puts "Page Array Value '#{pagearrayvalue}'"
+															
+																if documentpagevalues != ""
+																	if pagearrayvalue != " document_image_number"
+																		documentpagevalues = documentpagevalues + "," + pagearrayvalue
+																	end
+																else
+																	if pagearrayvalue != '"document_image_number"'
+																		documentpagevalues = pagearrayvalue
+																	end
+																end
+															end
+															pollingitem.addCustomMetadata("documentpagenumbers", "#{documentpagevalues}", "text", "user")
+														end
+
 													else
 														puts "No Detections"
 													end
