@@ -1,5 +1,8 @@
 require 'json'
 require_relative 'utilities/rest_client'
+require_relative 'utilities/multi_logger'
+
+# LOGGER = MultiLogger.instance
 
 class T3kApi
   ENDPOINT_UPLOAD = "/upload"
@@ -77,7 +80,7 @@ class T3kApi
       if do_try
         sleep @retry_delay
         attempts += 1
-        puts "Retrying task (#{attempts} / #{@retry_count}) ..."
+        LOGGER.warn "Retrying task (#{attempts} / #{@retry_count}) ..."
       end
     end
 
@@ -183,7 +186,7 @@ class T3kApi
 
       poll_response = @rest_client.get(ENDPOINT_POLL % { id: id})
 
-      puts poll_response
+      LOGGER.debug poll_response
 
       if poll_response[:code] >= 500
         # Server error, try again
@@ -231,7 +234,7 @@ class T3kApi
     do_with_retries do
       poll_results = poll id
 
-      puts poll_results
+      LOGGER.debug poll_results
 
       if poll_results[T3kApi::POLL_FIELD_FINISHED]
         done = true
@@ -274,7 +277,7 @@ class T3kApi
       results = false
 
       analysis_response = @rest_client.get(ENDPOINT_RESULTS % { id: id })
-      puts analysis_response
+      LOGGER.debug analysis_response
 
       if analysis_response[:code] >= 500
         # Server error.  Try again

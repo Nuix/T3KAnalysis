@@ -1,3 +1,10 @@
+require_relative 'utilities/multi_logger'
+
+LOGGER = MultiLogger.instance
+LOGGER.add_output STDOUT
+LOGGER.progname "Nuix T3K Connector"
+LOGGER.log_level :info
+
 require 'json'
 require_relative 't3k_api'
 
@@ -22,18 +29,18 @@ def run_analysis(config)
       next_id += 1
 
       server_file = "#{server_path}/#{File.basename(file)}"
-      puts "Processing #{next_id}: #{server_path}/#{server_file}"
+      LOGGER.info "Processing #{next_id}: #{server_file}"
 
       result_id = api.upload next_id, server_file
-      puts "Result ID: #{result_id}"
+      LOGGER.info "Result ID: #{result_id}"
 
       unless result_id.nil?
         wait_results = api.wait_for_analysis result_id
-        puts "Results of waiting: #{wait_results}"
+        LOGGER.info "Results of waiting: #{wait_results}"
 
         if "DONE" == wait_results
           analysis_results = api.get_results result_id
-          puts analysis_results
+          LOGGER.info analysis_results
         end
       end
 

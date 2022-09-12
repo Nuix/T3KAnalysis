@@ -1,10 +1,12 @@
 require 'singleton'
+require 'logger'
+
 class MultiLogger
   include Singleton
 
   def initialize
     @outputs = []
-    @logger = Logger.new(File.new('/dev/null'))
+    @logger = Logger.new(File.open(File::NULL, 'w'))
     @logger.formatter = proc do | severity, datetime, progname, msg |
       message = "#{datetime}: [#{progname}] #{severity.upcase} :: #{msg}"
       @outputs.each do | output |
@@ -33,6 +35,14 @@ class MultiLogger
     end
 
     @logger.close
+  end
+
+  def log_level(severity)
+    @logger.level = severity
+  end
+
+  def progname(program_name)
+    @logger.progname = program_name
   end
 
   def debug(message)
