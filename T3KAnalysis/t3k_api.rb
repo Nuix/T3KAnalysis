@@ -135,7 +135,7 @@ class T3kApi
         raise "The request was malformed.  Request: POST #{ENDPOINT_UPLOAD}, body=#{upload_body}"
       end
 
-      puts upload_request_results
+      Logger.debug upload_request_results
 
       if upload_request_results[:code] >= 500
         # server error, try again
@@ -165,7 +165,49 @@ class T3kApi
   # @return A Hash with the results ids for each item as values, keyed to the source id that was sent to this method.
   # @see #upload(id, path)
   def batch_upload(hash_of_items)
+    result_id_map = {}
 
+    do_with_retries do
+      upload_request_results = @rest_client.post ENDPOINT_UPLOAD, body: hash_of_items
+
+      success = false
+
+      if upload_request_results[:code] == 434
+        # invalid id, increment and try again.  Unlike the single request form, this can't easily be fixed for a
+        # batch, so fail and let the caller deal with it
+        raise "One or more of the IDs used in the request is invalid.  Ensure they are unique integers. " +
+              "POST #{ENDPOINT_UPLOAD}, body=#{hash_of_items}"
+      end
+
+      if upload_request_results[:code] == 400
+        # malformed request, fail.
+        raise "The request was malformed.  Request: POST #{ENDPOINT_UPLOAD}, body=#{upload_body}"
+      end
+
+      Logger.debug upload_request_results
+
+      if upload_request_results[:code] >= 500
+        # server error, try again
+        success = false
+      end
+
+      if upload_request_results[:code] == 200
+        # success, map result ids to source ids
+
+        upload_request_results[:body].each do | results_id, file_path |
+          source_id = hash_of_items.key file_path
+          unless source_id.nil?
+            result_id_map[source_id] = results_id
+          end
+        end
+
+        success = true
+      end
+
+      success
+    end
+
+    result_id_map
   end
 
 
@@ -298,4 +340,5 @@ class T3kApi
 
     analysis_results
   end
+
 end
