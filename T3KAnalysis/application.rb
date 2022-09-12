@@ -14,21 +14,40 @@ CONFIG_SERVER_PATH = "server_file_path"
 CONFIG_LOCAL_PATH = "local_file_path"
 CONFIG_LAST_ID = "last_data_id"
 
-def run_analysis(config)
-  api = T3kApi.new config
-
-  local_path = config[CONFIG_SECTION][CONFIG_LOCAL_PATH]
+def analyze_batch(api, list_of_paths)
+  last_id = config[CONFIG_SECTION][CONFIG_LAST_ID]
   server_path = config[CONFIG_SECTION][CONFIG_SERVER_PATH]
 
+  begin
+    next_id = last_id
+    batch = {}
+    list_of_paths.each do | path |
+      if File.exist? path
+        next_id += 1
+        server_file = "#{server_path}/#{File.basename(path)}"
+
+        batch[next_id] = server_file
+        Logger.info "Batch Processing #{batch}"
+
+        result_id_map = api.batch_upload batch
+
+        # rest of batch processing
+      end
+    end
+  ensure
+    config[CONFIG_SECTION][CONFIG_LAST_ID] = next_id
+    save_config config
+  end
+end
+def analyze_single(api, path)
   last_id = config[CONFIG_SECTION][CONFIG_LAST_ID]
-  next_id = last_id
-  files_to_process = Dir["#{local_path}/*"]
+  server_path = config[CONFIG_SECTION][CONFIG_SERVER_PATH]
 
-  files_to_process.each do | file |
-    if File.exist? file
-      next_id += 1
+  begin
+    if File.exist? path
+      next_id = last_id + 1
 
-      server_file = "#{server_path}/#{File.basename(file)}"
+      server_file = "#{server_path}/#{File.basename(path)}"
       LOGGER.info "Processing #{next_id}: #{server_file}"
 
       result_id = api.upload next_id, server_file
@@ -43,16 +62,25 @@ def run_analysis(config)
           LOGGER.info analysis_results
         end
       end
-
     end
-  end
-
-  begin
   ensure
     config[CONFIG_SECTION][CONFIG_LAST_ID] = next_id
     save_config config
   end
 
+end
+def run_analysis(config)
+  api = T3kApi.new config
+
+  local_path = config[CONFIG_SECTION][CONFIG_LOCAL_PATH]
+
+  files_to_process = Dir["#{local_path}/*"]
+
+  if files_to_process.size > 1
+    analyze_batch api, files_to_process
+  elsif files_to_process.size == 1
+    analyze_single api, files_to_process[0]
+  end
 end
 
 def read_config
