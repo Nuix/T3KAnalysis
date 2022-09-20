@@ -18,6 +18,8 @@ class MultiLogger
           output.write message
         elsif output.class.method_defined? :log
           output.log message
+        elsif output.class.method_defined? :log_message
+          output.log_message message
         end
       end
     end

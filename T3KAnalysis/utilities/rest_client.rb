@@ -201,7 +201,16 @@ class RestClient
         end
       end
 
-      LOGGER.debug "Making Request: #{request.method} #{request.uri} Body: #{request.body}"
+      LOGGER.debug "Making Request: #{request.method} #{request.uri}"
+
+      LOGGER.debug "Headers:"
+      request.each_header do | header, header_value |
+        LOGGER.debug "    #{header}=#{header_value}"
+      end
+
+      unless request.body.nil?
+        LOGGER.debug "Body: #{request.body}"
+      end
 
       http.request request
 

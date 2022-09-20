@@ -1,22 +1,23 @@
+script_directory = File.dirname $0
 require_relative 'utilities/multi_logger'
 
 LOGGER = MultiLogger.instance
 LOGGER.add_output STDOUT
 LOGGER.progname "Nuix T3K Connector"
-LOGGER.log_level :info
+LOGGER.log_level :debug
 
 require 'json'
 require_relative 't3k_api'
 
-CONFIG_FILE = "T3KAnalysis.json"
-CONFIG_SECTION = "t3k_analysis"
-CONFIG_SERVER_PATH = "server_file_path"
-CONFIG_LOCAL_PATH = "local_file_path"
-CONFIG_LAST_ID = "last_data_id"
+CONFIG_FILE = "t3k_settings.json"
+CONFIG_SERVER_PATH = "t3k_server_path"
+CONFIG_LOCAL_PATH = "nuix_output_path"
+ID_STORAGE_PATH = "t3k_data_id.json"
+CONFIG_LAST_ID = "last_id"
 
-def analyze_batch(api, list_of_paths)
-  last_id = config[CONFIG_SECTION][CONFIG_LAST_ID]
-  server_path = config[CONFIG_SECTION][CONFIG_SERVER_PATH]
+def analyze_batch(config, api, list_of_paths)
+  last_id = config[CONFIG_LAST_ID]
+  server_path = config[CONFIG_SERVER_PATH]
 
   begin
     next_id = last_id
@@ -35,15 +36,17 @@ def analyze_batch(api, list_of_paths)
       end
     end
   ensure
-    config[CONFIG_SECTION][CONFIG_LAST_ID] = next_id
+    config[CONFIG_LAST_ID] = next_id
     save_config config
   end
 end
-def analyze_single(api, path)
-  last_id = config[CONFIG_SECTION][CONFIG_LAST_ID]
-  server_path = config[CONFIG_SECTION][CONFIG_SERVER_PATH]
+def analyze_single(config, api, path)
+  last_id = config[CONFIG_LAST_ID]
+  server_path = config[CONFIG_SERVER_PATH]
 
   begin
+    next_id = last_id
+
     if File.exist? path
       next_id = last_id + 1
 
@@ -64,7 +67,7 @@ def analyze_single(api, path)
       end
     end
   ensure
-    config[CONFIG_SECTION][CONFIG_LAST_ID] = next_id
+    config[CONFIG_LAST_ID] = next_id
     save_config config
   end
 
@@ -72,25 +75,30 @@ end
 def run_analysis(config)
   api = T3kApi.new config
 
-  local_path = config[CONFIG_SECTION][CONFIG_LOCAL_PATH]
+  local_path = config[CONFIG_LOCAL_PATH]
 
   files_to_process = Dir["#{local_path}/*"]
 
   if files_to_process.size > 1
-    analyze_batch api, files_to_process
+    analyze_batch config, api, files_to_process
   elsif files_to_process.size == 1
-    analyze_single api, files_to_process[0]
+    analyze_single config, api, files_to_process[0]
   end
 end
 
 def read_config
-  script_path = File.dirname(__FILE__)
+  script_path = File.dirname($0)
   config = JSON.load_file File.join(script_path, CONFIG_FILE)
 end
 
-def save_config(config)
+def read_last_id
   script_path = File.dirname(__FILE__)
-  File.write File.join(script_path, CONFIG_FILE), JSON.generate(config)
+  hash = JSON.load_file File.join(script_path, CONFIG_FILE)
+end
+
+def save_last_id(last_id)
+  script_path = File.dirname(__FILE__)
+  File.write File.join(script_path, ID_STORAGE_PATH), JSON.generate({CONFIG_LAST_ID => last_id})
 end
 
 if __FILE__ == $0

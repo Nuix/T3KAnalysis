@@ -1,6 +1,8 @@
 require 'json'
 require_relative 'utilities/rest_client'
 require_relative 'utilities/multi_logger'
+require_relative 't3k_result'
+require_relative 't3k_detection'
 
 # LOGGER = MultiLogger.instance
 
@@ -23,28 +25,76 @@ class T3kApi
   POLL_FIELD_FILE_NOT_FOUND = "FILE_NOT_FOUND"
   POLL_FIELD_VALID_MEDIA = "VALID_MEDIA_OBJECT"
 
-  RESULTS_DETECTION = "detections"
   RESULTS_METADATA = "metadata"
-  METADATA_MD5 = "md5"
+  METADATA_ID = "id"
+  METADATA_PATH = "file_path"
 
-  DETECTION_FIELD_TYPE = "type"
-  DETECTION_FIELD_SCORE = "score"
-  DETECTION_FIELD_INFO = "info"
-  DETECTION_FIELD_BOX = "box"
+  METADATA_VIDEO_FRAME_COUNT = "frame_count_video"
+  METADATA_VIDEO_WIDTH = "width"
+  METADATA_VIDEO_HEIGHT = "height"
+  METADATA_VIDEO_FPS = "fps_video"
+  METADATA_VIDEO_KEYFRAMES = "key_frame_positions"
+  METADATA_VIDEO_KEYFRAME_SEARCH = "n_positions_analyzed_for_keyframe_detection"
 
-  DETECTION_TYPE_AGE_GENDER = "age/gender"
+  METADATA_DOCUMENT_TYPE = "document_type"
+  METADATA_DOCUMENT_PAGE_COUNT = "document_total_page_number"
+  METADATA_DOCUMENT_IMAGE_COUNT = "document_total_image_number"
+  METADATA_DOCUMENT_HAS_TEXT = "document_has_embedded_text"
+  METADATA_DOCUMENT_IMAGE_IDS = "document_analyzed_image_ids"
+  METADATA_DOCUMENT_MD5 = "md5"
+  METADATA_DOCUMENT_SHA1 = "sha1"
+
+  METADATA_IMAGE_MD5 = "md5"
+  METADATA_IMAGE_SHA1 = "sha1"
+  METADATA_IMAGE_MODE = "mode"
+  METADATA_IMAGE_WIDTH = "width"
+  METADATA_IMAGE_HEIGHT = "height"
+  METADATA_IMAGE_BYTES = "file_size"
+  METADATA_IMAGE_SIZE = "size"
+  METADATA_IMAGE_PHOTODNA = "photoDNA"
+
+  RESULTS_DETECTION = "detections"
+  DETECTION_TYPE = "type"
+  DETECTION_INFO = "info"
+
+  DETECTION_VIDEO_DATA_FRAME = "frame"
+  DETECTION_DOC_DATA_PAGE = "document_page_number"
+  DETECTION_DOC_DATA_IMAGE = "document_image_number"
+
+  DETECTION_TYPE_PERSON = "age/gender"
+  PERSON_VALUE_AGE = "age"
+  PERSON_VALUE_GENDER = "gender"
+  PERSON_VALUE_SYMBOL = "gender_string"
+  PERSON_VALUE_DATA = "data"
+  PERSON_VALUE_SCORE = "score"
+  PERSON_VALUE_BOX = "box"
+
   DETECTION_TYPE_OBJECT = "object"
-  DETECTION_TYPE_MD5 = "md5"
-  DETECTION_TYPE_TEXT = "text"
-
-  AGE_GENDER_VALUE_GENDER = "gender"
-  AGE_GENDER_VALUE_AGE = "age"
-
   OBJECT_VALUE_CLASSIFICATION = "class_name"
   OBJECT_VALUE_DATA = "data"
-  OBJECT_DATA_PAGE = "document_page_number"
-  OBJECT_DATA_IMAGE = "document_image_number"
-  OBJECT_DATA_FRAME = "frame"
+  OBJECT_VALUE_SCORE = "score"
+  OBJECT_VALUE_BOX = "box"
+
+  DETECTION_TYPE_MD5 = "md5"
+  MD5_HIT = "hit"
+  MD5_HIT_TYPE = "type"
+  MD5_HIT_HASH = "hash"
+  MD5_HIT_DESCRIPTION = "description"
+  MD5_HIT_METADATA = "metadata"
+  MD5_HIT_ID = "id"
+
+  DETECTION_TYPE_TEXT = "text"
+  TEXT_HIT = "hit"
+  TEXT_HIT_STRING = "string"
+  TEXT_HIT_DESCRIPTION = "description"
+  TEXT_HIT_LANGUAGE = "language"
+  TEXT_HIT_REGEX = "regex"
+  TEXT_HIT_FUZZY = "fuzzy"
+  TEXT_HIT_MLR = "minimal_levenshtein_ratio"
+
+  TEXT_MATCHES = "matches"
+
+  IMAGE_NALVIS = "nalvis_result"
 
   CONFIG_SECTION = "t3k_server"
   CONFIG_HOST = "host"
@@ -56,13 +106,13 @@ class T3kApi
   def initialize(config)
     @config = config
 
-    @host = config[CONFIG_SECTION][CONFIG_HOST]
-    @port = config[CONFIG_SECTION][CONFIG_PORT]
+    @host = config[CONFIG_HOST]
+    @port = config[CONFIG_PORT]
     @rest_client = RestClient.new @host, @port
 
-    @batch_size = config[CONFIG_SECTION][CONFIG_BATCH_SIZE]
-    @retry_count = config[CONFIG_SECTION][CONFIG_RETRY_COUNT]
-    @retry_delay = config[CONFIG_SECTION][CONFIG_RETRY_DELAY]
+    @batch_size = config[CONFIG_BATCH_SIZE]
+    @retry_count = config[CONFIG_RETRY_COUNT]
+    @retry_delay = config[CONFIG_RETRY_DELAY]
   end
 
   # Performs a task, retrying it if it fails.
@@ -135,7 +185,7 @@ class T3kApi
         raise "The request was malformed.  Request: POST #{ENDPOINT_UPLOAD}, body=#{upload_body}"
       end
 
-      Logger.debug upload_request_results
+      LOGGER.debug upload_request_results
 
       if upload_request_results[:code] >= 500
         # server error, try again
@@ -338,7 +388,207 @@ class T3kApi
       results
     end
 
-    analysis_results
+    build_results_object analysis_results
   end
 
+  def build_results_object(results_hash)
+    if is_image_result results_hash
+      results = build_image_results results_hash
+    elsif is_video_result results_hash
+      results = build_video_results results_hash
+    elsif is_document_result results_hash
+      results = build_document_results results_hash
+    else
+      raise "The provided results are not a recognized kind of results.  " +
+              "Expected either image (which has a #{METADATA_IMAGE_MODE} key), " +
+              "video (which has a #{METADATA_VIDEO_FPS} key) or " +
+              "document (which has a #{METADATA_DOCUMENT_PAGE_COUNT} key."
+    end
+
+    metadata = results_hash[RESULTS_METADATA]
+    results.id = metadata[METADATA_ID]
+    results.path = metadata[METADATA_PATH]
+
+    results_hash[RESULTS_DETECTION].each_pair do | detection_id, detection_hash |
+      results.add_detection build_detection results, detection_hash
+    end
+
+    results
+  end
+
+  def is_image_result(results_hash)
+    metadata = results_hash[RESULTS_METADATA]
+
+    metadata.key? METADATA_IMAGE_MODE
+  end
+
+  def is_video_result(results_hash)
+    metadata = results_hash[RESULTS_METADATA]
+
+    metadata.key? METADATA_VIDEO_FPS
+  end
+
+  def is_document_result(results_hash)
+    metadata = results_hash[RESULTS_METADATA]
+
+    metadata.key? METADATA_DOCUMENT_PAGE_COUNT
+  end
+
+  def build_image_results(results_hash)
+    results = T3KImageResult.new
+
+    metadata = results_hash[RESULTS_METADATA]
+    results.md5 = metadata[METADATA_IMAGE_MD5]
+    results.sha1 = metadata[METADATA_IMAGE_SHA1]
+    results.photo_dna = metadata[METADATA_IMAGE_PHOTODNA]
+    results.mode = metadata[METADATA_IMAGE_MODE]
+    results.bytes = metadata[METADATA_IMAGE_BYTES]
+    results.size = metadata[METADATA_IMAGE_SIZE]
+    results.width = metadata[METADATA_IMAGE_WIDTH]
+    results.height = metadata[METADATA_IMAGE_HEIGHT]
+    results.nalavis = results_hash[IMAGE_NALVIS]
+
+    results
+  end
+
+  def build_video_results(results_hash)
+    results = T3KVideoResult.new
+
+    metadata = results_hash[RESULTS_METADATA]
+    results.fps = metadata[METADATA_VIDEO_FPS]
+    results.frame_count = metadata[METADATA_VIDEO_FRAME_COUNT]
+    results.keyframes = metadata[METADATA_VIDEO_KEYFRAMES]
+    results.keyframe_search = metadata[METADATA_VIDEO_KEYFRAME_SEARCH]
+    results.width = metadata[METADATA_VIDEO_WIDTH]
+    results.height = metadata[METADATA_VIDEO_HEIGHT]
+
+    results
+  end
+
+  def build_document_results(results_hash)
+    results = T3KDocumentResult.new
+
+    metadata = results_hash[RESULTS_METADATA]
+    results.doc_type = metadata[METADATA_DOCUMENT_TYPE]
+    results.page_count = metadata[METADATA_DOCUMENT_PAGE_COUNT]
+    results.image_count = metadata[METADATA_DOCUMENT_IMAGE_COUNT]
+    results.image_ids = metadata[METADATA_DOCUMENT_IMAGE_IDS]
+    results.has_text = metadata[METADATA_DOCUMENT_HAS_TEXT]
+    results.md5 = metadata[METADATA_DOCUMENT_MD5]
+    results.sha1 = metadata[METADATA_DOCUMENT_SHA1]
+
+    results
+
+  end
+
+  def build_detection(result, detection_hash)
+    case detection_hash[DETECTION_TYPE]
+    when DETECTION_TYPE_PERSON
+      detection = build_person_detection result, detection_hash
+    when DETECTION_TYPE_OBJECT
+      detection = build_object_detection result, detection_hash
+    when DETECTION_TYPE_MD5
+      detection = build_md5_detection result, detection_hash
+    when DETECTION_TYPE_TEXT
+      detection = build_text_detection result, detection_hash
+    else
+      raise "An unexpected type of detection was encountered: #{detection_hash[DETECTION_TYPE]}"
+    end
+
+    detection.info = detection_hash[DETECTION_INFO]
+
+    detection
+  end
+
+  def build_person_detection(result, detection_hash)
+    detection = T3KPersonDetection.new
+
+    detection.age = detection_hash[PERSON_VALUE_AGE]
+    detection.gender = detection_hash[PERSON_VALUE_GENDER]
+    detection.symbol = detection_hash[PERSON_VALUE_SYMBOL]
+    detection.score = detection_hash[PERSON_VALUE_SCORE]
+    detection.box = detection_hash[PERSON_VALUE_BOX]
+    detection.data = build_data result, detection_hash
+
+    detection
+  end
+
+  def build_object_detection(result, detection_hash)
+    detection = T3KObjectDetection.new
+
+    detection.classification = detection_hash[OBJECT_VALUE_CLASSIFICATION]
+    detection.score = detection_hash[OBJECT_VALUE_SCORE]
+    detection.box = detection_hash[OBJECT_VALUE_BOX]
+    detection.data = build_data result, detection_hash
+
+    detection
+  end
+
+  def build_md5_detection(result, detection_hash)
+    detection = T3KMd5Detection.new
+
+    hit = detection_hash[MD5_HIT]
+    detection.hit_type = hit[MD5_HIT_ID]
+    detection.hit_hash = hit[MD5_HIT_HASH]
+    detection.description = hit[MD5_HIT_DESCRIPTION]
+    detection.metadata = hit[MD5_HIT_METADATA]
+    detection.hit_id = hit[MD5_HIT_ID]
+
+    detection
+  end
+
+  def build_text_detection(result, detection_hash)
+    detection = T3KTextDetection.new
+
+    hit = detection_hash[TEXT_HIT]
+    detection.string = hit[TEXT_HIT_STRING]
+    detection.description = hit[TEXT_HIT_DESCRIPTION]
+    detection.language = hit[TEXT_HIT_LANGUAGE]
+    detection.regex = hit[TEXT_HIT_REGEX]
+    detection.fuzzy = hit[TEXT_HIT_FUZZY]
+    detection.mlr = hit[TEXT_HIT_MLR]
+    detection.matches = detection_hash[TEXT_MATCHES]
+  end
+
+  def build_data(result, detection_hash)
+    if "video" == result.type
+      build_video_data detection_hash
+    elsif "document" == result.type
+      build_document_data detection_hash
+    else
+      if detection_hash.key? PERSON_VALUE_DATA
+        detection_hash[PERSON_VALUE_DATA]
+      else
+        nil
+      end
+    end
+  end
+
+  def build_video_data(detection_hash)
+    vid_data = VideoDetectionData.new
+
+    data = detection_hash[PERSON_VALUE_DATA]
+
+    unless data.index(DETECTION_VIDEO_DATA_FRAME).nil?
+      vid_data.frame = data[data.index(DETECTION_VIDEO_DATA_FRAME) + 1]
+    end
+
+    vid_data
+  end
+
+  def build_document_data(detection_hash)
+    doc_data = DocumentDetectionData.new
+
+    data = detection_hash[PERSON_VALUE_DATA]
+
+    unless data.index(DETECTION_DOC_DATA_PAGE).nil?
+      doc_data.page_number = data[data.index(DETECTION_DOC_DATA_PAGE) + 1]
+    end
+
+    unless data.index(DETECTION_DOC_DATA_IMAGE).nil?
+      doc_data.image_number = data[data.index(DETECTION_DOC_DATA_IMAGE) + 1]
+    end
+
+    doc_data
+  end
 end
