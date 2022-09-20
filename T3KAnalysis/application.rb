@@ -41,7 +41,7 @@ def analyze_batch(config, api, list_of_paths)
   end
 end
 def analyze_single(config, api, path)
-  last_id = config[CONFIG_LAST_ID]
+  last_id = read_last_id
   server_path = config[CONFIG_SERVER_PATH]
 
   begin
@@ -68,16 +68,16 @@ def analyze_single(config, api, path)
     end
   ensure
     config[CONFIG_LAST_ID] = next_id
-    save_config config
+    save_last_id next_id
   end
 
 end
 def run_analysis(config)
   api = T3kApi.new config
 
-  local_path = config[CONFIG_LOCAL_PATH]
+  local_path = config[CONFIG_LOCAL_PATH].gsub "\\", "/"
 
-  files_to_process = Dir["#{local_path}/*"]
+  files_to_process = Dir.glob("#{local_path}/*")
 
   if files_to_process.size > 1
     analyze_batch config, api, files_to_process
@@ -93,7 +93,8 @@ end
 
 def read_last_id
   script_path = File.dirname(__FILE__)
-  hash = JSON.load_file File.join(script_path, CONFIG_FILE)
+  hash = JSON.load_file File.join(script_path, ID_STORAGE_PATH)
+  hash[CONFIG_LAST_ID].to_i
 end
 
 def save_last_id(last_id)

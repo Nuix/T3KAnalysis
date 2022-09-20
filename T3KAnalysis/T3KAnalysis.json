@@ -1,1 +1,0 @@
-{"t3k_server":{"host":"http://127.0.0.1","port":"5000","batch_size":10,"retry_count":10,"retry_delay_seconds":3},"t3k_analysis":{"server_file_path":"/CORE/resources/data","local_file_path":"C:/projects/ProServ/T3K/Runnable/T3K_COREv1.1/data","last_data_id":13}}

@@ -97,11 +97,11 @@ class T3kApi
   IMAGE_NALVIS = "nalvis_result"
 
   CONFIG_SECTION = "t3k_server"
-  CONFIG_HOST = "host"
-  CONFIG_PORT = "port"
-  CONFIG_BATCH_SIZE = "batch_size"
-  CONFIG_RETRY_COUNT = "retry_count"
-  CONFIG_RETRY_DELAY = "retry_delay_seconds"
+  CONFIG_HOST = "t3k_server_url"
+  CONFIG_PORT = "t3k_server_port"
+  CONFIG_BATCH_SIZE = "nuix_batch_size"
+  CONFIG_RETRY_COUNT = "nuix_retry_count"
+  CONFIG_RETRY_DELAY = "nuix_retry_delay_seconds"
 
   def initialize(config)
     @config = config
@@ -172,33 +172,32 @@ class T3kApi
       upload_body = { id => path }
       upload_request_results = @rest_client.post ENDPOINT_UPLOAD, body: upload_body
 
-      success = false
-
-      if upload_request_results[:code] == 434
-        # invalid id, increment and try again
-        id += 1
-        success = false
-      end
-
-      if upload_request_results[:code] == 400
+      case upload_request_results[:code]
+      when 400 then
         # malformed request, fail.
         raise "The request was malformed.  Request: POST #{ENDPOINT_UPLOAD}, body=#{upload_body}"
-      end
-
-      LOGGER.debug upload_request_results
-
-      if upload_request_results[:code] >= 500
+      when 434 then
+        # invalid id, increment and try again
+        id += 1
+        next false
+      when 500..599 then
         # server error, try again
-        success = false
-      end
-
-      if upload_request_results[:code] == 200
+        LOGGER.info "Server error " +
+                    "#{upload_request_results[:code]} " +
+                    "(#{upload_request_results[:message]}): " +
+                    "#{upload_request_results[:body]}"
+        next false
+      when 200 then
         # success, finish
         result_id = upload_request_results[:body].keys[0]
-        success = true
+        next true
+      else
+        LOGGER.info "Unexpected return value, trying again. " +
+                    "#{upload_request_results[:code]} " +
+                    "(#{upload_request_results[:message]}): " +
+                    "#{upload_request_results[:body]}"
+        next false
       end
-
-      success
     end
 
     result_id
@@ -220,28 +219,23 @@ class T3kApi
     do_with_retries do
       upload_request_results = @rest_client.post ENDPOINT_UPLOAD, body: hash_of_items
 
-      success = false
-
-      if upload_request_results[:code] == 434
+      case upload_request_results[:code]
+      when 434 then
         # invalid id, increment and try again.  Unlike the single request form, this can't easily be fixed for a
         # batch, so fail and let the caller deal with it
         raise "One or more of the IDs used in the request is invalid.  Ensure they are unique integers. " +
               "POST #{ENDPOINT_UPLOAD}, body=#{hash_of_items}"
-      end
-
-      if upload_request_results[:code] == 400
+      when 400 then
         # malformed request, fail.
         raise "The request was malformed.  Request: POST #{ENDPOINT_UPLOAD}, body=#{upload_body}"
-      end
-
-      Logger.debug upload_request_results
-
-      if upload_request_results[:code] >= 500
+      when 500..599 then
         # server error, try again
-        success = false
-      end
-
-      if upload_request_results[:code] == 200
+        LOGGER.info "Server error " +
+                    "#{upload_request_results[:code]} " +
+                    "(#{upload_request_results[:message]}): " +
+                    "#{upload_request_results[:body]}"
+        next false
+      when 200 then
         # success, map result ids to source ids
 
         upload_request_results[:body].each do | results_id, file_path |
@@ -251,10 +245,14 @@ class T3kApi
           end
         end
 
-        success = true
+        next true
+      else
+        LOGGER.info "Unexpected return value, trying again. " +
+                    "#{upload_request_results[:code]} " +
+                    "(#{upload_request_results[:message]}): " +
+                    "#{upload_request_results[:body]}"
+        next false
       end
-
-      success
     end
 
     result_id_map
@@ -280,33 +278,29 @@ class T3kApi
 
       LOGGER.debug poll_response
 
-      if poll_response[:code] >= 500
+      case poll_response[:code]
+      when 500..599 then
         # Server error, try again
-        success = false
-      end
-
-      if 400 == poll_response[:code]
+        LOGGER.info "Server error #{poll_response[:code]} (#{poll_response[:message]}): #{poll_response[:body]}"
+        next false
+      when 400 then
         raise "The poll request was malformed: #{poll_response[:body].values[0]}"
-      end
-
-      if 404 == poll_response[:code]
+      when 404 then
         raise "The item being polled for was not found."
-      end
-
-      if 433 == poll_response[:code]
+      when 433 then
         # file was broken, stop polling and return the error
         poll_results = poll_response[:body]
-        success = true
-      end
-
-      if poll_response[:code].between? 200, 299
+        next true
+      when 200..299 then
         # polling was successful (work may not be done)
         poll_results = poll_response[:body]
-        success = true
+        next true
+      else
+        LOGGER.info "Unexpected return value, trying again. " +
+                    "#{poll_response[:code]} (#{poll_response[:message]}): #{poll_response[:body]}"
+        next false
       end
 
-      # Should not get here, assume bad, try again
-      success
     end
 
     poll_results
@@ -366,26 +360,24 @@ class T3kApi
     analysis_results = nil
 
     do_with_retries do
-      results = false
-
       analysis_response = @rest_client.get(ENDPOINT_RESULTS % { id: id })
       LOGGER.debug analysis_response
 
-      if analysis_response[:code] >= 500
-        # Server error.  Try again
-        results = false
-      end
-
-      if 400 == analysis_response[:code]
+      case analysis_response[:code]
+      when 500..599 then
+        LOGGER.info "Server error " +
+                    "#{analysis_response[:code]} (#{analysis_response[:message]}): #{analysis_response[:body]}"
+        next false
+      when 400 then
         raise "Malformed request for getting the results.  [#{analysis_response[:body]}]"
-      end
-
-      if 200 == analysis_response[:code]
+      when 200 then
         analysis_results = analysis_response[:body]
-        results = true
+        next true
+      else
+        LOGGER.info "Unexpected return value, trying again. " +
+                    "#{analysis_response[:code]} (#{analysis_response[:message]}): #{analysis_response[:body]}"
+        next false
       end
-
-      results
     end
 
     build_results_object analysis_results
@@ -410,7 +402,7 @@ class T3kApi
     results.path = metadata[METADATA_PATH]
 
     results_hash[RESULTS_DETECTION].each_pair do | detection_id, detection_hash |
-      results.add_detection build_detection results, detection_hash
+      results.add_detection(build_detection(results, detection_hash))
     end
 
     results
