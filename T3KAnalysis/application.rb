@@ -1,4 +1,3 @@
-script_directory = File.dirname $0
 require_relative 'utilities/multi_logger'
 
 LOGGER = MultiLogger.instance
@@ -13,10 +12,10 @@ CONFIG_FILE = "t3k_settings.json"
 CONFIG_SERVER_PATH = "t3k_server_path"
 CONFIG_LOCAL_PATH = "nuix_output_path"
 ID_STORAGE_PATH = "t3k_data_id.json"
-CONFIG_LAST_ID = "last_id"
+CONFIG_NEXT_ID = "last_id"
 
 def analyze_batch(config, api, list_of_paths)
-  last_id = config[CONFIG_LAST_ID]
+  last_id = config[CONFIG_NEXT_ID]
   server_path = config[CONFIG_SERVER_PATH]
 
   begin
@@ -36,20 +35,16 @@ def analyze_batch(config, api, list_of_paths)
       end
     end
   ensure
-    config[CONFIG_LAST_ID] = next_id
+    config[CONFIG_NEXT_ID] = next_id
     save_config config
   end
 end
 def analyze_single(config, api, path)
-  last_id = read_last_id
+  next_id = read_next_id
   server_path = config[CONFIG_SERVER_PATH]
 
   begin
-    next_id = last_id
-
     if File.exist? path
-      next_id = last_id + 1
-
       server_file = "#{server_path}/#{File.basename(path)}"
       LOGGER.info "Processing #{next_id}: #{server_file}"
 
@@ -65,10 +60,11 @@ def analyze_single(config, api, path)
           LOGGER.info analysis_results
         end
       end
+
+      next_id += 1
     end
   ensure
-    config[CONFIG_LAST_ID] = next_id
-    save_last_id next_id
+    save_next_id next_id
   end
 
 end
@@ -87,19 +83,27 @@ def run_analysis(config)
 end
 
 def read_config
-  script_path = File.dirname($0)
-  config = JSON.load_file File.join(script_path, CONFIG_FILE)
+  script_path = File.dirname $0
+  JSON.load_file File.join(script_path, CONFIG_FILE)
 end
 
-def read_last_id
-  script_path = File.dirname(__FILE__)
-  hash = JSON.load_file File.join(script_path, ID_STORAGE_PATH)
-  hash[CONFIG_LAST_ID].to_i
+def read_next_id
+  script_path = File.dirname $0
+
+  next_id_file = File.join script_path, ID_STORAGE_PATH
+  if File.exist? next_id_file
+    hash = JSON.load_file File.join(script_path, ID_STORAGE_PATH)
+    hash[CONFIG_NEXT_ID].to_i
+  else
+    0
+  end
 end
 
-def save_last_id(last_id)
-  script_path = File.dirname(__FILE__)
-  File.write File.join(script_path, ID_STORAGE_PATH), JSON.generate({CONFIG_LAST_ID => last_id})
+def save_next_id(next_id)
+  script_path = File.dirname $0
+  next_id_file = File.join script_path, ID_STORAGE_PATH
+  next_id_data = { CONFIG_NEXT_ID => next_id }
+  File.write next_id_file, JSON.generate(next_id_data)
 end
 
 if __FILE__ == $0
