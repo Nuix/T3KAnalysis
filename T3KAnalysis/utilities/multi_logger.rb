@@ -26,7 +26,13 @@ class MultiLogger
   end
 
   def add_output(logger)
-    @outputs.append logger
+    if logger.is_a? String
+      # Assume it is a file path and open a logger to it
+      @outputs.append Logger.new File.open(logger, 'w')
+    else
+      # Assume it has some means of being logged to...
+      @outputs.append logger
+    end
   end
 
   def close

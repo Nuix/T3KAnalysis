@@ -1,6 +1,6 @@
 require 'json'
-require_relative 'utilities/rest_client'
-require_relative 'utilities/multi_logger'
+require_relative '../utilities/rest_client'
+require_relative '../utilities/multi_logger'
 require_relative 't3k_result'
 require_relative 't3k_detection'
 
@@ -107,7 +107,7 @@ class T3kApi
     @config = config
 
     @host = config[CONFIG_HOST]
-    @port = config[CONFIG_PORT]
+    @port = config[CONFIG_PORT].to_i.to_s
     @rest_client = RestClient.new @host, @port
 
     @batch_size = config[CONFIG_BATCH_SIZE]
@@ -306,6 +306,42 @@ class T3kApi
     poll_results
   end
 
+  def wait_for_batch(wait_on_queue, ready_queue, progress)
+    current_cycle = 0
+    completed_items = 0
+    until wait_on_queue.empty?
+      poll_for = wait_on_queue.shift
+
+      # If we have already seen this item in the current cycle, wait a bit before trying again - give the server
+      # time to process
+      if poll_for[:cycle] > current_cycle
+        sleep @retry_delay
+        current_cycle = poll_for[:cycle]
+      end
+
+      poll_id = poll_for[:id]
+
+
+      poll_result = poll poll_id
+
+      LOGGER.debug "[#{poll_id}]: #{poll_result}"
+
+      complete, results = process_poll_results poll_result
+
+      LOGGER.debug "Complete: #{complete}, Results: #{results}"
+
+      if complete
+        ready_queue.push({:id => poll_id, :result => results})
+        completed_items += 1
+        progress.set_sub_progress completed_items
+      else
+        # This item not done processing, push it into the next polling cycle
+        poll_for[:cycle] = poll_for[:cycle] + 1
+        wait_on_queue.push poll_for
+      end
+    end
+  end
+
   # Repeatedly poll an item until it completes.
   #
   # This method uses #poll(id) to get the status and waits for it to reach the finished status.
@@ -314,7 +350,6 @@ class T3kApi
   # @return A String with the results: "DONE" if finished without error, or an appropriate error message.
   # @see #poll(id)
   def wait_for_analysis(id)
-    done = false
     results = nil
 
     do_with_retries do
@@ -322,28 +357,44 @@ class T3kApi
 
       LOGGER.debug poll_results
 
-      if poll_results[T3kApi::POLL_FIELD_FINISHED]
-        done = true
-
-        if poll_results[POLL_FIELD_ERROR]
-          if poll_results.key? POLL_FIELD_VALID_MEDIA
-            results = poll_results[POLL_FIELD_VALID_MEDIA]
-          elsif poll_results.key? POLL_FIELD_FILE_NOT_FOUND
-            results = poll_results[POLL_FIELD_FILE_NOT_FOUND]
-          elsif poll_results.key? POLL_FIELD_ID_NOT_FOUND
-            results = poll_results[POLL_FIELD_ID_NOT_FOUND]
-          else
-            results = "Unknown Error: #{poll_results}"
-          end
-        else
-          results = "DONE"
-        end
-      end
-
-      done
+      complete, results = process_poll_results poll_results
+      next complete
     end
 
     results
+  end
+
+  def process_poll_results(poll_results)
+    if poll_results[T3kApi::POLL_FIELD_FINISHED]
+
+      if poll_results[POLL_FIELD_ERROR]
+
+        if poll_results.key? POLL_FIELD_FILE_NOT_FOUND
+
+          return [true, poll_results[POLL_FIELD_FILE_NOT_FOUND]]
+
+        elsif poll_results.key? POLL_FIELD_ID_NOT_FOUND
+
+          return [true, poll_results[POLL_FIELD_ID_NOT_FOUND]]
+
+        else
+
+          return [true, "Unknown Error: #{poll_results}"]
+
+        end
+
+      else
+
+        return [true, "DONE"]
+
+      end
+
+    else
+
+      [false, "Still Processing"]
+
+    end
+
   end
 
   # Retrieve the results of analysis for an item.
@@ -438,7 +489,7 @@ class T3kApi
     results.size = metadata[METADATA_IMAGE_SIZE]
     results.width = metadata[METADATA_IMAGE_WIDTH]
     results.height = metadata[METADATA_IMAGE_HEIGHT]
-    results.nalavis = results_hash[IMAGE_NALVIS]
+    results.nalvis = results_hash[IMAGE_NALVIS]
 
     results
   end
@@ -464,8 +515,8 @@ class T3kApi
     results.doc_type = metadata[METADATA_DOCUMENT_TYPE]
     results.page_count = metadata[METADATA_DOCUMENT_PAGE_COUNT]
     results.image_count = metadata[METADATA_DOCUMENT_IMAGE_COUNT]
-    results.image_ids = metadata[METADATA_DOCUMENT_IMAGE_IDS]
-    results.has_text = metadata[METADATA_DOCUMENT_HAS_TEXT]
+    results.images = metadata[METADATA_DOCUMENT_IMAGE_IDS]
+    results.text = metadata[METADATA_DOCUMENT_HAS_TEXT]
     results.md5 = metadata[METADATA_DOCUMENT_MD5]
     results.sha1 = metadata[METADATA_DOCUMENT_SHA1]
 
@@ -483,11 +534,15 @@ class T3kApi
       detection = build_md5_detection result, detection_hash
     when DETECTION_TYPE_TEXT
       detection = build_text_detection result, detection_hash
+    when nil
+      detection = nil
     else
       raise "An unexpected type of detection was encountered: #{detection_hash[DETECTION_TYPE]}"
     end
 
-    detection.info = detection_hash[DETECTION_INFO]
+    unless detection.nil?
+      detection.info = detection_hash[DETECTION_INFO]
+    end
 
     detection
   end

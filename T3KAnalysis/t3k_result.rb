@@ -24,6 +24,10 @@ class T3kResult
   def each_detection
     @detections.each { | detection | yield detection }
   end
+
+  def to_s
+    instance_variables.collect{|var| "#{var}=#{instance_variable_get var}"}.join", "
+  end
 end
 
 class T3KImageResult < T3kResult
