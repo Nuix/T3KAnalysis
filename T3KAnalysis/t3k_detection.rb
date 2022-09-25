@@ -10,6 +10,11 @@ class T3kDetection
 
   attr_reader :type
   attr_accessor :info
+
+  def to_s
+    instance_variables.collect{|var| "#{var}=#{instance_variable_get var}"}.join", "
+  end
+
 end
 
 class T3KPersonDetection < T3kDetection
@@ -51,7 +56,7 @@ class T3KMd5Detection < T3kDetection
     @hit_id = nil
   end
 
-  attr_accessor :hit_id, :hit_id, :hit_hash, :description, :metadata
+  attr_accessor :hit_type, :hit_id, :hit_hash, :description, :metadata
 end
 
 class T3KTextDetection < T3kDetection
@@ -78,6 +83,10 @@ class DetectionData
   end
 
   attr_reader :type
+
+  def to_s
+    instance_variables.collect{|var| "#{var}=#{instance_variable_get var}"}.join", "
+  end
 end
 
 class VideoDetectionData < DetectionData

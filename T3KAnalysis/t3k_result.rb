@@ -17,6 +17,10 @@ class T3kResult
     @detections[index]
   end
 
+  def detection_count
+    @detections.size
+  end
+
   def add_detection(detection)
     @detections << detection
   end

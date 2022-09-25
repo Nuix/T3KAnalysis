@@ -595,6 +595,8 @@ class T3kApi
     detection.fuzzy = hit[TEXT_HIT_FUZZY]
     detection.mlr = hit[TEXT_HIT_MLR]
     detection.matches = detection_hash[TEXT_MATCHES]
+
+    detection
   end
 
   def build_data(result, detection_hash)
@@ -602,12 +604,10 @@ class T3kApi
       build_video_data detection_hash
     elsif "document" == result.type
       build_document_data detection_hash
+    elsif detection_hash.key? PERSON_VALUE_DATA
+      detection_hash[PERSON_VALUE_DATA]
     else
-      if detection_hash.key? PERSON_VALUE_DATA
-        detection_hash[PERSON_VALUE_DATA]
-      else
-        nil
-      end
+      nil
     end
   end
 
@@ -628,14 +628,15 @@ class T3kApi
 
     data = detection_hash[PERSON_VALUE_DATA]
 
-    unless data.index(DETECTION_DOC_DATA_PAGE).nil?
-      doc_data.page_number = data[data.index(DETECTION_DOC_DATA_PAGE) + 1]
+    data.each do | doc_entry |
+      if DETECTION_DOC_DATA_PAGE === doc_entry[0]
+        doc_data.page_number = doc_entry[1]
+      elsif DETECTION_DOC_DATA_IMAGE === doc_entry[0]
+        doc_data.image_number = doc_entry[1]
+      end
     end
 
-    unless data.index(DETECTION_DOC_DATA_IMAGE).nil?
-      doc_data.image_number = data[data.index(DETECTION_DOC_DATA_IMAGE) + 1]
-    end
-
+    LOGGER.debug "Document Data: #{doc_data} from #{data}"
     doc_data
   end
 end
