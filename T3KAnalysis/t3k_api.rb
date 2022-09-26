@@ -616,8 +616,8 @@ class T3kApi
 
     data = detection_hash[PERSON_VALUE_DATA]
 
-    unless data.index(DETECTION_VIDEO_DATA_FRAME).nil?
-      vid_data.frame = data[data.index(DETECTION_VIDEO_DATA_FRAME) + 1]
+    if DETECTION_VIDEO_DATA_FRAME === data[0]
+      vid_data = data[1]
     end
 
     vid_data
