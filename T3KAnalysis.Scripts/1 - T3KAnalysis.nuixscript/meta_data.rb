@@ -38,13 +38,13 @@ class MetaData
   def self.video_data(index, detection)
     case detection
     when "person"
-      base = MetaData.person index
+      base = "#{MetaData.detection_index index}|Person"
     when "md5"
-      base = MetaData.md5 index
+      base = "#{MetaData.detection_index index}|MD5 Hit"
     when "text"
-      base = MetaData.text index
+      base = "#{MetaData.detection_index index}|Text Hit"
     else
-      base = MetaData.object index, detection
+      base = "#{MetaData.detection_index index}|#{detection}"
     end
 
     "#{base}|Frame"

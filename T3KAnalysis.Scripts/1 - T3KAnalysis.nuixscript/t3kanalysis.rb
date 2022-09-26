@@ -2,7 +2,7 @@ require_relative 'utilities/multi_logger'
 require_relative 'meta_data'
 
 LOGGER = MultiLogger.instance
-LOGGER.add_output STDOUT
+# LOGGER.add_output STDOUT
 LOGGER.progname "Nuix T3K Connector"
 LOGGER.log_level :debug
 LOGGER.add_output File.new File.join(current_case.get_location.get_absolute_path, Time.now.strftime("T3K_Analysis_%Y%m%d_%H.%M.%S.log")), "w"
@@ -28,7 +28,7 @@ begin
     end
   end
 
-  def assign_custom_metadata(source_items, analysis_results)
+  def assign_custom_metadata(source_items, analysis_results, report)
     analyzed_path = analysis_results.path
 
     guid = File.basename analyzed_path, ".*"
@@ -42,15 +42,22 @@ begin
     source_item = source_items[guid]
     metadata = source_item.custom_metadata
 
-    unless 0 === analysis_results.detection_count
+    if 0 < analysis_results.detection_count
 
       if 1 === analysis_results.detection_count and analysis_results.detection(0).nil?
         # There is only one item, and it is nil, means no detections
+        not_detected_count = report.get_data_field_value("Item Counts", "Not Matched").to_i
+        report.update_data("Item Counts", "Not Matched", not_detected_count + 1)
+
         metadata.put_text MetaData.t3k, "No Matches Detected"
+
       else
         # otherwise, detections - watch for mid-stream nils...
         metadata.put_text MetaData.t3k, "Match Detected"
         metadata.put_integer MetaData.detection_count, analysis_results.detection_count
+
+        detected_count = report.get_data_field_value("Item Counts", "Detected").to_i
+        report.update_data("Item Counts", "Detected", detected_count + analysis_results.detection_count)
 
         detection_id = 0
         analysis_results.each_detection do | detection |
@@ -70,6 +77,10 @@ begin
           end
         end
       end
+
+    else
+      not_detected_count = report.get_data_field_value("Item Counts", "Not Matched").to_i
+      report.update_data("Item Counts", "Not Matched", not_detected_count + 1)
 
       LOGGER.debug "Result MetaData: #{metadata}"
     end
@@ -174,11 +185,66 @@ begin
     export_selected_items source_items_map.values, pd
 
     pd.main_status_and_log_it = "Processing with T3K"
-    run_analysis read_config, pd do | batch_results |
+
+    config = read_config
+    app = Application.new config
+
+    sub_progress_was_visible = false
+    app.batch_analysis_listener = Class.new do
+      def initialize(pd)
+        @pd = pd
+      end
+
+      def batch_started(index, number_of_batches, message=nil)
+        @pd.main_status_and_log_it = message unless message.nil?
+        @pd.set_main_progress index-1, number_of_batches
+
+        @pd.sub_progress_visible = true
+        sub_progress_was_visible = true
+      end
+
+      def batch_updated(index, batch_size, message=nil)
+        @pd.sub_status_and_log_it = message unless message.nil?
+        @pd.set_sub_progress index, batch_size
+      end
+
+      def batch_completed(index, number_of_batches, message=nil)
+        @pd.main_status_and_log_it = message unless message.nil?
+        @pd.set_main_progress index, number_of_batches
+      end
+    end.new pd
+
+    app.item_analysis_listener = Class.new do
+      def initialize(pd)
+        @pd = pd
+      end
+
+      def analysis_started(message)
+        @pd.main_status_and_log_it = message
+      end
+
+      def analysis_updated(step, total_steps, message=nil)
+        @pd.main_status_and_log_it = message unless message.nil?
+        @pd.set_main_progress step, total_steps
+      end
+
+      def analysis_completed(message=nil)
+        @pd.main_status_and_log_it = message unless message.nil?
+      end
+
+      def analysis_error(message)
+        LOGGER.error message
+      end
+    end
+
+    app.run_analysis do | batch_results |
 
       batch_results_size = batch_results.size
+
+      analyzed_count = report_data.get_data_field_value("Item Counts", "Analyzed").to_i
+      report_data.update_data("Item Counts", "Analyzed", analyzed_count + batch_results.size)
+
       current_item = 0
-      sub_progress_was_visible = false # todo add this method: pd.get_sub_progress_visible
       pd.sub_progress_visible = true
       pd.set_sub_progress(0, batch_results_size)
 
@@ -186,9 +252,9 @@ begin
         current_item += 1
 
         pd.sub_status_and_log_it = "Assigning results for #{result.path}"
-        assign_custom_metadata source_items_map, result
+        assign_custom_metadata source_items_map, result, report_data
 
-        pd.set_sub_progress(current_item, batch_results_size)
+        pd.set_sub_progress current_item, batch_results_size
       end
 
       pd.sub_progress_visible = sub_progress_was_visible

@@ -306,7 +306,7 @@ class T3kApi
     poll_results
   end
 
-  def wait_for_batch(wait_on_queue, ready_queue, progress)
+  def wait_for_batch(wait_on_queue, ready_queue, &block)
     current_cycle = 0
     completed_items = 0
     until wait_on_queue.empty?
@@ -333,7 +333,10 @@ class T3kApi
       if complete
         ready_queue.push({:id => poll_id, :result => results})
         completed_items += 1
-        progress.set_sub_progress completed_items
+
+        unless block.nil?
+          block.call completed_items
+        end
       else
         # This item not done processing, push it into the next polling cycle
         poll_for[:cycle] = poll_for[:cycle] + 1
@@ -616,8 +619,8 @@ class T3kApi
 
     data = detection_hash[PERSON_VALUE_DATA]
 
-    if DETECTION_VIDEO_DATA_FRAME === data[0]
-      vid_data = data[1]
+    unless data.index(DETECTION_VIDEO_DATA_FRAME).nil?
+      vid_data.frame = data[data.index(DETECTION_VIDEO_DATA_FRAME) + 1]
     end
 
     vid_data
