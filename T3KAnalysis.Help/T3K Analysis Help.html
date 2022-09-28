@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Nuix's T3K Analysis Tool</title>
+
+    <style>
+        body {
+            font-family: "Corbel", "sans-serif";
+            font-size: large;
+        }
+
+        header {
+            padding-left: 20px;
+            padding-right: 20px;
+            margin: 1em;
+        }
+
+        #help-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+        }
+
+        #help-toc {
+            width: auto;
+            position: sticky;
+            top: 50px;
+            background: #415a69 none repeat scroll 0 0;
+            border: 0 solid #aaa;
+            display: table;
+            font-size: 95%;
+            margin: 1em;
+            padding: 20px;
+        }
+
+        #help-contents {
+            width: 70vw;
+        }
+
+        .toc_title {
+            font-weight: 700;
+            text-align: left;
+            color: #eee;
+        }
+
+        #help-toc a:link { color: azure; }
+        #help-toc a:visited { color: cadetblue; }
+
+        #help-toc li, #help-toc ul, #help-toc ul li{
+            list-style: outside none none !important;
+        }
+
+        code {
+            background: #f9f9f9;
+            border: 1px solid #aaa;
+            padding: 1px;
+        }
+
+        h2 {
+            background: #2a6db6;
+            color: #eee;
+            padding-left: 5px;
+            border: 0 solid #aaa;
+        }
+
+        h1 {
+            background: #415a69;
+            color: #eee;
+            padding-left: 5px;
+        }
+        figure {
+            text-align: center;
+            width: 75%;
+        }
+
+        li > figure {
+            text-align: left;
+            margin-left: 0;
+            display: flex;
+            flex-flow: row;
+            justify-content: flex-start;
+        }
+        li > figure > figcaption {
+            align-self: center;
+        }
+        li > figure > img {
+            /*width: 75%;
+            height: 75%;*/
+            padding-left: 2em;
+        }
+
+        dt {
+            font-weight: lighter;
+        }
+
+        dl.qanda > dt {
+            font-weight: bold;
+        }
+
+        input.tabs {
+            display:block; /* "enable" hidden elements in IE/edge */
+            position:absolute; /* then hide them off-screen */
+            left:-100%;
+        }
+
+        ul.tabs {
+            position:relative;
+            z-index:999;
+            list-style:none;
+            display:flex;
+            margin-bottom:-1px;
+        }
+
+        ul.tabs label,
+        div.tabs {
+            border:1px solid #415a69;
+        }
+
+        ul.tabs label {
+            background: #415a69;
+            color: #eee;
+            display:inline-block;
+            padding:0.25em 1em;
+            border-right-width:0;
+        }
+
+        ul.tabs li:first-child label {
+            border-radius:0.5em 0 0 0;
+        }
+
+        ul.tabs li:last-child label {
+            border-right-width:1px;
+            border-radius:0 0.5em 0 0;
+        }
+
+        div.tabs {
+            position:relative;
+        }
+
+        input:nth-child(1):focus ~ ul li:nth-child(1) label,
+        input:nth-child(2):focus ~ ul li:nth-child(2) label {
+            text-decoration:underline;
+        }
+
+        input:nth-child(1):checked ~ ul li:nth-child(1) label,
+        input:nth-child(2):checked ~ ul li:nth-child(2) label {
+            background: white;
+            color: black;
+        }
+
+        div.tabs > section,
+        div.tabs > section h2 {
+            position:absolute;
+            top:-999em;
+            left:-999em;
+        }
+
+        div.tabs > section {
+            padding:1em 1em 0;
+        }
+
+        input:nth-child(1):checked ~ div > section:nth-child(1),
+        input:nth-child(2):checked ~ div > section:nth-child(2) {
+            position:Static;
+        }
+
+        ul.tabs label {
+            -webkit-touch-callout:none;
+            -webkit-user-select:none;
+            -khtml-user-select:none;
+            -moz-user-select:none;
+            -ms-user-select:none;
+            user-select:none;
+        }
+
+        table, td, th, tr {
+            border-collapse: collapse;
+            border: 1px solid black;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <img src="resources/Nuix_Logo_V2_Color.svg" alt="The Nuix Logo" width="50%" />
+    <h1 id="top">Nuix's T3K Analysis Tool</h1>
+    <p>
+        This tool connects to a T3K CORE server to run images, movies, and documents through T3K's analysis and
+        adds the results to the source items as metadata.
+    </p>
+    <p>
+        This help document will describe how to configure and use the utility.
+    </p>
+</header>
+<article id="help-container">
+    <div id="help-contents">
+        <section>
+            <h2 id="quick">Quick Start</h2>
+            <p>
+                To run this application, do the following steps.  For details on the process, see the sections below.
+            </p>
+            <TODO task="Work on this section" />
+            <ol>
+                <li>Open a Case with items of interest</li>
+                <li>Select items to analyze</li>
+                <li>Run the <code>T3K > T3K Analysis</code> command from the <code>Scripts</code> menu</li>
+                <li>View the results using the provided T3K metadata profile.</li>
+            </ol>
+        </section>
+        <section>
+            <h2 id="running">Running T3K Analysis</h2>
+            <p>
+                This section of help is for the day-to-day running of the analysis.  Before running it, the application
+                must first be <a href="#installing.installing">installed on the local computer</a>.  This section
+                assumes the T3K Core server is running, the scripts are installed, and the server address is
+                <a href="#running.settings">configured</a>.
+            </p>
+            <h3 id="running.analysis">Running the Analysis</h3>
+            <p>
+                Details to be provided...
+            </p>
+            <TODO task="Work on this section" />
+            <p>
+                When the process is complete, the progress dialog will show where the log files for this process are
+                located (see <a href="#additional.logs">Logs</a> for more about logs).  The main workspace will open
+                a new Workbench tab to the data that was processed.
+            </p>
+            <h3 id="running.results">Results of Analysis</h3>
+            <p>
+                When the analysis process completes, each processed item will have Custom Metadata added that provides
+                the list of detections found on that item.
+            </p>
+            <p>
+                Each item that was analyzed with T3K will have a Custom Metadata label <code>T3K Detections</code>.  It
+                has two possible values: <code>Match Detected</code> and <code>No Matches Detected</code>.  If the
+                T3K Detection metadata item is "Match Detected" then there will be a child Metadata item
+                <code>Count</code> which provides the number of things detected on this item.  Additionally, for each
+                detection, there will be a child metadata item with the index and a tree of metadata items with the
+                details of the detection.  For example, a document with a single child detected might look like this:
+            </p>
+            <ul>
+                <li>
+                    T3K Detections: Match Detected
+                    <ul>
+                        <li>Count: 1</li>
+                        <li>
+                            1
+                            <ul>
+                                <li>
+                                    Person
+                                    <ul>
+                                        <li>Score: 19.0</li>
+                                        <li>Age: 2</li>
+                                        <li>Gender: female</li>
+                                        <li>Page: 1</li>
+                                        <li>Image: 1</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <p>
+                The results will be opened in a new workbench tab with columns summarizing the results of each type
+                of detection found on the item.
+            </p>
+            <table>
+                <tr>
+                    <th>Item</th><th>T3K Detections</th><th>T3K Detections|Count</th><th>Person</th>
+                </tr>
+                <tr>
+                    <td>Sample.doc</td><td>Match Detected</td><td>1</td><td>female: 2 (19.0%)</td>
+                </tr>
+            </table>
+            <h4 id="running.results.tags">Result Tags</h4>
+            <p>
+                None at this point...
+            </p>
+            <h3 id="running.settings">Configuring the Application Settings</h3>
+            <p>
+                The Nuix T3K Analysis has various settings used to configure how the application runs and how it
+                communicates with the T3K Core server.  You can edit these settings on the
+                <code>T3K > Configure Settings</code> screen from the <code>Scripts</code> menu.  The settings dialog
+                has two pages:
+            </p>
+            <dl>
+                <dt>Main</dt>
+                <dd>
+                    Change options that are likely to need to change from time to time - such as the local directory
+                    used for storing items as they are analyzed and Nuix Worker settings.
+                </dd>
+                <dt>Server Settings</dt>
+                <dd>
+                    These settings are for configuring the server connection and are less likely to change on a regular
+                    basis.
+                </dd>
+            </dl>
+            <h4 id="running.settings.reloading">Main Settings</h4>
+            <dl>
+                <dt>File Export Directory</dt>
+                <dd>
+                    Ise the <code>Choose</code> button to choose the file directory that will store the items to be
+                    analyzed as they are transported to T3K.  This is a temporary cache location that should be
+                    accessible to the T3K Core server.  The contents of this directory will be deleted when the
+                    analysis completes.
+                </dd>
+                <dt>Worker Settings</dt>
+                <dd>
+                    Will be removed, there is no reload step here.
+                </dd>
+            </dl>
+            <h4 id="running.settings.server">Server Settings</h4>
+            <dl>
+                <dt>T3K Server URL</dt>
+                <dd>
+                    Host address for the T3K Core server.
+                </dd>
+                <dt>T3K Server Port</dt>
+                <dd>
+                    Port to use for communicating to the T3K server.
+                </dd>
+                <dt>Server-side Path to Images</dt>
+                <dd>
+                    Images are exported locally and that path must be available to the server.  This field lets you
+                    enter the path to the exported files from the server's perspective.
+                </dd>
+                <dt>Request Retry Count</dt>
+                <dd>
+                    The application will retry requests to the server in a number of cases - such as server errors that
+                    might be recoverable, timeouts, and when either a 210 response is given, or when polling for a
+                    result and the result is not ready.  This parameter allows you to define how many times to retry.
+                    A value of 0 will result in no retry attempts - any failure will result in an error.   This is
+                    not recommended because polling for results will almost always require more than one request.  This
+                    covers normal retries associated with polling for analysis completion, so this may need to be tuned
+                    up for cases when large videos are being worked on.
+                </dd>
+                <dt>Request Retry Delay (seconds)</dt>
+                <dd>
+                    The number of seconds to wait between retry attempts.  Setting this value to 0 will mean the retries
+                    will occur one on top of the other - which is not good practice.  Increase this to reduce the
+                    request load on the server.
+                </dd>
+                <dt>Processing Batch Size</dt>
+                <dd>
+                    Items will be uploaded to T3K in batches to make the work more responsive.  This defines the
+                    number of items that will be sent to the server in one batch.  After being uploaded the items
+                    will be waited on, and when results they will be processed.  After the batch is completely processed
+                    the next batch will begin.
+                </dd>
+            </dl>
+        </section>
+        <section>
+            <h2 id="additional">Additional Information</h2>
+            <h3 id="addition.cache">The Local Cache</h3>
+            <p>
+                Processing items in T3K requires those items to be stored to disk. ...
+            </p>
+            <TODO task="Finish this section" />
+            <h3 id="additional.logs">Logs</h3>
+            <p>
+                During processing, output is logged from and to multiple different places:
+            </p>
+            <dl>
+                <dt>Progress Logging</dt>
+                <dd>
+                    Informational progress is logged to the Progress dialog to track the progress of the process.
+                </dd>
+                <dt>Application Logs</dt>
+                <dd>
+                    A log file will be made in the current case's main directory.  It will be named
+                    <code>T3K_Analysis_&lt;current date>_&lt;current time>.log</code>
+                </dd>
+            </dl>
+            <h3 id="additional.failures">Known Reasons for Failures</h3>
+            <TODO task="Work on this section" />
+            <h3 id="additional.troubleshooting">Troubleshooting</h3>
+            <TODO task="Work on this section" />
+        </section>
+        <section>
+            <h2 id="installing">Installing and Configuring the Utility</h2>
+            <TODO task="Work on this section" />
+            <h3 id="installing.prereqs">Prerequisites</h3>
+            <p>
+                Before running this configuration, the following requirements must be in place:
+            </p>
+            <dl>
+                <dt>T3K CORE Server</dt>
+                <dd>
+                    This tool will talk to an existing T3K server, which must be installed and running prior to running
+                    this tool.
+                </dd>
+            </dl>
+            <TODO task="Work on this section" />
+            <h3 id="installing.installing">Installation</h3>
+            <TODO task="Work on this section" />
+        </section>
+    </div>
+    <nav id="help-toc">
+        <h4 class="toc_title">Contents</h4>
+        <ul class="toc_list">
+            <li><a href="#top">Top of page</a></li>
+            <li><a href="#quick">Quick Start</a></li>
+            <li><a href="#running">Running the Utility</a>
+                <ul>
+                    <li><a href="#running.analysis">Running T3k Analysis</a></li>
+                    <li><a href="#running.settings">Analysis Setting</a></li>
+                    <li><a href="#running.results">Results of Analysis</a></li>
+                </ul>
+            </li>
+            <li><a href="#additional">Additional Information</a>
+                <ul>
+                    <li><a href="#addition.cache">The Local Cache</a></li>
+                    <li><a href="#additional.logs">Logs</a></li>
+                    <li><a href="#additional.failures">Known Reasons for Failures</a> </li>
+                    <li><a href="#additional.troubleshooting">Troubleshooting</a></li>
+                </ul>
+            </li>
+            <li><a href="#installing">Installing and Configuration</a>
+                <ul>
+                    <li><a href="#installing.prereqs">Prerequisites</a></li>
+                    <li><a href="#installing.installing">Installation</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+</article>
+</body>
+</html>
