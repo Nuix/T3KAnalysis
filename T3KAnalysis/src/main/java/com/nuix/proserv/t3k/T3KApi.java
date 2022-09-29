@@ -1,12 +1,17 @@
 package com.nuix.proserv.t3k;
 
 import com.nuix.proserv.restclient.RestClient;
+import com.nuix.proserv.t3k.results.PollResults;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 public class T3KApi {
     private static final Logger LOG = LogManager.getLogger(T3KApi.class.getCanonicalName());
@@ -28,13 +33,13 @@ public class T3KApi {
         boolean doTry = true;
 
         while(doTry && ((retryCount < 0) || (currentAttempt <= retryCount))) {
-            LOG.debug(String.format("Try #%d", currentAttempt+1));
+            LOG.debug("Try #{}", currentAttempt+1);
 
             try {
                 doTry = !action.call();
             } catch (Exception e) {
-                LOG.error(String.format("Received %s when trying an action.  Assuming failure and trying again.",
-                        e.getMessage()), e);
+                LOG.error("Received {} when trying an action.  Assuming failure and trying again.",
+                        e.getMessage(), e);
             }
 
             if(doTry) {
@@ -46,7 +51,7 @@ public class T3KApi {
 
                 currentAttempt += 1;
 
-                LOG.warn(String.format("Retrying task (%d / %d)", currentAttempt, retryCount));
+                LOG.warn("Retrying task ({} / {})", currentAttempt, retryCount);
             }
         }
 
@@ -61,6 +66,8 @@ public class T3KApi {
     }
 
     public long upload(long sourceId, String serverPath) {
+        LOG.trace("Uploading #{} at {}", sourceId, serverPath);
+
         // Using arrays to hold the mutable values as the outer scope to lambdas is considered final.
         long[] sourceIdHolder = { sourceId };
         long[] resultIdHolder = { 0L };
@@ -68,8 +75,10 @@ public class T3KApi {
         doWithRetries(() -> {
 
             Map<String, Object> uploadBody = Map.of(String.valueOf(sourceIdHolder[0]), serverPath);
-            Map<String, Object> uploadRequestResults = this.client.post(Endpoint.UPLOAD.get(),
-                    null, null, uploadBody, false, null );
+            LOG.debug("Upload Body: {}", uploadBody);
+
+            Map<String, Object> uploadRequestResults = this.client.post(Endpoint.UPLOAD.get(), uploadBody);
+            LOG.debug("Upload Results: {}", uploadRequestResults);
 
             int resultCode = (Integer)uploadRequestResults.get("code");
 
@@ -83,59 +92,61 @@ public class T3KApi {
                             ));
                 case 434:
                     // The source ID is invalid, increment and try again
+                    LOG.warn("The provided Source ID ({}) was already used.  Trying with the next one.",
+                            sourceIdHolder[0]);
                     sourceIdHolder[0] = sourceIdHolder[0] + 1;
                     return false;
                 case 200:
                     // Success, finish up
-                    resultIdHolder[0] = Long.parseLong(
-                            ((Map<String, Object>)uploadRequestResults.get("body"))
-                                    .keySet().stream().findFirst().get()
-                    );
+                    Map<String, Object> resultsBody = (Map<String, Object>)uploadRequestResults.get("body");
+                    if (resultsBody.isEmpty()) {
+                        resultIdHolder[0] = 0;
+                    } else {
+                        long resultId = Long.parseLong(resultsBody.keySet().iterator().next());
+                        resultIdHolder[0] = resultId;
+                    }
                     return true;
                 default:
                     if (resultCode >= 500 && resultCode <= 599) {
                         // Server error.  Try again.
-                        LOG.info(String.format(
-                                "Server Error: [%s] %d: %s",
+                        LOG.info("Server Error: [{}] {}: {}",
                                 uploadRequestResults.get("message"),
                                 resultCode,
                                 uploadRequestResults.get("body")
-                        ));
+                        );
 
                         return false;
                     } else {
                         // Unexpected value.  Assume it is bad and retry
-                        LOG.info(String.format(
-                           "Unexpected return value.  Trying again.  [%s] %d: %s",
+                        LOG.info("Unexpected return value.  Trying again.  [{}] {}: {}",
                            uploadRequestResults.get("message"),
                            resultCode,
                            uploadRequestResults.get("body")
-                        ));
+                        );
+
+                        return  false;
                     }
             }
-
-            // Shouldn't be able to get here.
-            return false;
         });
 
         return resultIdHolder[0];
     }
 
     public Map<Long, Long> batchUpload(Map<Long, String> itemsToUpload) {
+        LOG.trace("Uploading Batch: {}", itemsToUpload);
+
         Map<Long, Long> sourceIdToResultIdMap = new HashMap<>();
 
-        Map<String, Object> body = new HashMap<>();
+        Map<String, Object> uploadBody = new HashMap<>();
 
         for(Long sourceId : itemsToUpload.keySet()) {
             String path = itemsToUpload.get(sourceId);
-            body.put(String.valueOf(sourceId), path);
+            uploadBody.put(String.valueOf(sourceId), path);
         }
 
         doWithRetries(() -> {
-            Map<String, Object> uploadRequestResults = this.client.post(
-                    Endpoint.UPLOAD.get(),
-                    null, null, body, false, null
-            );
+            Map<String, Object> uploadRequestResults = this.client.post( Endpoint.UPLOAD.get(), uploadBody );
+            LOG.debug("Batch Upload Response: {}", uploadRequestResults);
 
             int returnCode = (int)uploadRequestResults.get("code");
             switch (returnCode) {
@@ -146,13 +157,219 @@ public class T3KApi {
                             itemsToUpload
                     ));
                 case 400:
+                    // Malformed request.  Fail
+                    throw new T3KApiException(String.format(
+                            "The Upload request was malformed and cannot be repaired.  [POST]: %s B: %s",
+                            Endpoint.UPLOAD.get(),
+                            uploadBody.toString()
+                    ));
+                case 200:
+                    // Success.  Map results to sources
+                    Map<String, Object> resultsBody = (Map<String, Object>)uploadRequestResults.get("body");
+                    resultsBody.forEach((resultKey, filePath ) -> {
+                        long sourceId = itemsToUpload.entrySet().stream()
+                                .filter(entry -> filePath.equals(entry.getValue()))
+                                .map(Map.Entry::getKey).findFirst().get();
+                        long resultId = Long.parseLong(resultKey);
+
+                        sourceIdToResultIdMap.put(sourceId, resultId);
+                    });
+                    return true;
+                default:
+                    if (500 <= returnCode && 599 >= returnCode) {
+                        // Server error.  Try again.
+                        LOG.info("Server Error: [{}] {}: {}",
+                                uploadRequestResults.get("message"),
+                                returnCode,
+                                uploadRequestResults.get("body")
+                        );
+
+                        return false;
+
+                    } else {
+                        // Unexpected value.  Assume it is bad and retry
+                        LOG.info(String.format(
+                                "Unexpected return value.  Trying again.  [%s] %d: %s",
+                                uploadRequestResults.get("message"),
+                                returnCode,
+                                uploadRequestResults.get("body")
+                        ));
+
+                        return false;
+                    }
 
             }
-
-            // Shouldn't get here
-            return false;
         });
 
         return sourceIdToResultIdMap;
+    }
+
+    public Map<String, Object> poll(long itemId) {
+        LOG.trace("Polling for {}", itemId);
+
+        // Using a lambda function for the retries.  The variables in the enclosing scope are final for the lambda
+        // so using a map to have a modifiable container.  Results will be keyed to "value"
+        Map<String, Map<String, Object>> pollResultsHolder = new HashMap<>();
+
+        String pollEndpoint = Endpoint.POLL.get(String.valueOf(itemId));
+        LOG.debug("Polling Endpoint: {}", pollEndpoint);
+
+        doWithRetries(() -> {
+            Map<String, Object> pollResponse = client.get(pollEndpoint);
+            LOG.debug("Poll Response: {}", pollResponse);
+
+            int pollResponseCode = (Integer)pollResponse.get("code");
+            switch(pollResponseCode) {
+                case 433:
+                    // The file was broken.  Treat it as a successful poll but log an error.
+                    LOG.warn("The upload with index #{} was broken.  Poll is complete.", itemId);
+                    // Intentionally fall into the successes as this poll attempt completed
+                case 210:
+                    // The request is still processing.  We aren't waiting for completion here so treat as success
+                    // Intentionally falling into the 200 result.
+                case 200:
+                    // Poll successful.  Work still may not be done, so client needs to check
+                    pollResultsHolder.put("value", (Map<String, Object>)pollResponse.get("body"));
+                    return true;
+                case 400:
+                    // The request was malformed.
+                    throw new T3KApiException(String.format(
+                       "The polling request was malformed.  The Endpoint called was %s.", pollEndpoint
+                    ));
+                case 404:
+                    // The item being polled for doesn't exist on the server
+                    throw new T3KApiException(String.format(
+                        "The item id used for polling (%d) is not recognized", itemId
+                    ));
+                default:
+                    if (500 <= pollResponseCode && 599 >= pollResponseCode) {
+                        // Server error.  Try again.
+                        LOG.info("Server Error: [{}] {}: {}",
+                                pollResponse.get("message"),
+                                pollResponseCode,
+                                pollResponse.get("body")
+                        );
+
+                        return false;
+                    } else {
+                        // Unexpected code.  Expect it to be bad and retry
+                        LOG.info(String.format(
+                                "Unexpected return value.  Trying again.  [%s] %d: %s",
+                                pollResponse.get("message"),
+                                pollResponseCode,
+                                pollResponse.get("body")
+                        ));
+
+                        return false;
+                    }
+            }
+        });
+
+
+        return pollResultsHolder.get("value");
+    }
+
+    static private class CycleQueueEntry {
+        final long id;
+        int cycle = 0;
+
+        private final Object lock = new Object();
+
+        CycleQueueEntry(long id) {
+            this.id = id;
+        }
+
+        int incrementCycle() {
+            synchronized (lock) {
+                return ++cycle;
+            }
+        }
+
+        int getCycle() {
+            synchronized (lock) {
+                return cycle;
+            }
+        }
+
+        long getId() {
+            return id;
+        }
+    }
+
+    public void waitForBatch(Collection<Long> itemsToWaitFor, Queue<PollResults> completedItems, Consumer<Integer> callback) {
+        LOG.trace("Waiting for these items: {}", itemsToWaitFor);
+
+        int currentCycle = 0;
+        int completedItemCount = 0;
+        int numberOfItems = itemsToWaitFor.size();
+
+        Queue<CycleQueueEntry> queuedItems = new ConcurrentLinkedQueue<>();
+        itemsToWaitFor.forEach(itemId -> queuedItems.add(new CycleQueueEntry(itemId)));
+
+        LOG.debug("Starting cycle 1");
+        while (!queuedItems.isEmpty()) {
+            CycleQueueEntry item = queuedItems.poll();
+
+            // If this item is for the next cycle, wait a bit before checking and starting a new cycle
+            if (item.getCycle() > currentCycle) {
+                try {
+                    Thread.sleep((long)(retryDelay * 1000));
+                } catch (InterruptedException e) {
+                    // Don't care...
+                }
+
+                currentCycle = item.getCycle();
+                LOG.debug("Starting cycle {}", currentCycle + 1);
+            }
+
+            long pollForId = item.getId();
+            LOG.debug("Polling for {}", pollForId);
+
+            Map<String, Object> pollBody = poll(pollForId);
+            LOG.debug("Poll Results: {}={}", pollForId, pollBody);
+
+            PollResults results = PollResults.parseResults(pollBody);
+            LOG.debug(results);
+
+            if(results.isFinished()) {
+                LOG.trace("Waiting on {} completed.", results.getId());
+
+                completedItems.add(results);
+                completedItemCount++;
+
+                if(null != callback) {
+                    LOG.trace("Updating callback with completed information.");
+
+                    callback.accept(completedItemCount);
+                }
+            } else {
+                LOG.trace("Item {} not yet complete, putting it back in queue", item.getId());
+
+                item.incrementCycle();
+                queuedItems.add(item);
+            }
+        }
+
+        LOG.trace("Waiting on analysis completed.");
+    }
+
+    public PollResults waitForAnalysis(long id) {
+        LOG.trace("Waiting for {}", id);
+
+        // This method uses a lambda function to get results.  The container variables are final relative to the
+        // lambda so use an array as a container.
+        PollResults[] resultsHolder = { null };
+
+        doWithRetries(() -> {
+            Map<String, Object> pollBody = poll(id);
+
+            PollResults results = PollResults.parseResults(pollBody);
+
+            resultsHolder[0] = results;
+
+            return results.isFinished();
+        });
+
+        return resultsHolder[0];
     }
 }
