@@ -1,2 +1,6 @@
 .idea
+.gradle
+gradle
+gradlew
+gradlew.bat
 t3k_data_id.json
