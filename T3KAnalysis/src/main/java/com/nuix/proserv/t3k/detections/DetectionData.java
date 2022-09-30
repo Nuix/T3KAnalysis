@@ -2,7 +2,7 @@ package com.nuix.proserv.t3k.detections;
 
 import java.util.Map;
 
-public interface DetectionData {
+public interface DetectionData<T> {
+    T getData();
 
-    void storeDataFields(Map<String, Object> detectionData);
 }
