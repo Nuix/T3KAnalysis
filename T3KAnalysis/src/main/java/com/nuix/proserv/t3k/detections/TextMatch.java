@@ -2,6 +2,9 @@ package com.nuix.proserv.t3k.detections;
 
 import lombok.Getter;
 
+/**
+ * Provides details about a match to a TextDetection.
+ */
 public class TextMatch {
     @Getter
     private String matchedText;
