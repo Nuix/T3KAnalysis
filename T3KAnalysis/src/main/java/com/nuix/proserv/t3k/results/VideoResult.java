@@ -1,10 +1,11 @@
 package com.nuix.proserv.t3k.results;
 
+import com.nuix.proserv.t3k.detections.DetectionWithData;
+import com.nuix.proserv.t3k.detections.VideoDetectionData;
 import lombok.Getter;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.function.IntConsumer;
 
 public class VideoResult extends AnalysisResult implements RasteredResult, ResultWithNalvis {
@@ -30,7 +31,7 @@ public class VideoResult extends AnalysisResult implements RasteredResult, Resul
     @Getter
     private String nalvisString;
 
-    protected VideoResult() {}
+    private VideoResult() {}
 
     public int getKeyframeCount() {
         return keyFrameList.length;
@@ -38,6 +39,13 @@ public class VideoResult extends AnalysisResult implements RasteredResult, Resul
 
     public void forEachKeyframe(IntConsumer consumer) {
         Arrays.stream(keyFrameList).forEach(consumer);
+    }
+
+    @Override
+    protected void addDataToDetection(DetectionWithData detection, Map<String, Object> detectionData) {
+        Object[] data = (Object[]) detectionData.getOrDefault(DetectionWithData.DATA, new Object[0]);
+        VideoDetectionData videoDetectionData = new VideoDetectionData(data);
+        detection.setData(videoDetectionData);
     }
 
     @Override

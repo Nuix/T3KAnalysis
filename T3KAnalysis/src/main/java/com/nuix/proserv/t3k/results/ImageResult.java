@@ -1,5 +1,6 @@
 package com.nuix.proserv.t3k.results;
 
+import com.nuix.proserv.t3k.detections.DetectionWithData;
 import lombok.Getter;
 
 import java.util.Map;
@@ -37,17 +38,23 @@ public class ImageResult extends AnalysisResult implements HashedResult, Rastere
     @Getter
     private String photoDNA;
 
+    private ImageResult() {}
+
+    @Override
+    protected void addDataToDetection(DetectionWithData detection, Map<String, Object> detectionData) {
+        // An ImageResult has no Data to add...
+    }
+
     @Override
     public String toString() {
-        final StringBuilder output = new StringBuilder(super.toString())
-                .append(" Mode: ").append(mode)
-                .append(" Image Size: ").append(imageSize)
-                .append(" File Size: ").append(fileSize)
-                .append(" MD5: ").append(md5)
-                .append(" SHA1: ").append(sha1)
-                .append(" photoDNA: ").append(photoDNA);
 
-        return output.toString();
+        return super.toString() +
+                " Mode: " + mode +
+                " Image Size: " + imageSize +
+                " File Size: " + fileSize +
+                " MD5: " + md5 +
+                " SHA1: " + sha1 +
+                " photoDNA: " + photoDNA;
     }
 
     public static boolean isImageResults(Map<String, Object> metadata) {

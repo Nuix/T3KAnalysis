@@ -3,21 +3,23 @@ package com.nuix.proserv.t3k.detections;
 import com.nuix.proserv.t3k.T3KApiException;
 import lombok.Getter;
 
-import java.util.Map;
-
 public class VideoDetectionData implements DetectionData<Integer> {
     public static final String VIDEO_FRAME = "frame";
 
     @Getter
-    private Integer data;
+    private Integer frame;
 
-    VideoDetectionData(Object[] data) {
+    public VideoDetectionData(Object[] data) {
         storeDataFields(data);
+    }
+
+    public Integer getData() {
+        return frame;
     }
 
     @Override
     public String toString() {
-        return data.toString();
+        return frame.toString();
     }
 
     private void storeDataFields(Object[] detectionData) {
@@ -28,7 +30,7 @@ public class VideoDetectionData implements DetectionData<Integer> {
             ));
         }
         if(VIDEO_FRAME.equals(detectionData[0])) {
-            data = (Integer)detectionData[1];
+            frame = (Integer)detectionData[1];
         } else {
             throw new T3KApiException(String.format(
                 "The key term \"frame\" not found in the data.  %s",

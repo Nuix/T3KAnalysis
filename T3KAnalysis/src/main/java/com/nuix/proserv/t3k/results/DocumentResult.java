@@ -1,5 +1,7 @@
 package com.nuix.proserv.t3k.results;
 
+import com.nuix.proserv.t3k.detections.DetectionWithData;
+import com.nuix.proserv.t3k.detections.DocumentDetectionData;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -33,7 +35,9 @@ public class DocumentResult extends AnalysisResult implements HashedResult {
 
     private int[] imageIds;
 
-    private int imageIdCount() {
+    private DocumentResult() {}
+
+    public int imageIdCount() {
         if (null == imageIds) {
             return 0;
         } else {
@@ -41,12 +45,17 @@ public class DocumentResult extends AnalysisResult implements HashedResult {
         }
     }
 
-    private void forEachImageId(IntConsumer consumer) {
-        if (null == imageIds) {
-            // do nothing...
-        } else {
+    public void forEachImageId(IntConsumer consumer) {
+        if (null != imageIds) {
             Arrays.stream(imageIds).forEach(consumer);
         }
+    }
+
+    @Override
+    protected void addDataToDetection(DetectionWithData detection, Map<String, Object> detectionData) {
+        Object[] data = (Object[])detectionData.getOrDefault(DetectionWithData.DATA, new Object[0]);
+        DocumentDetectionData documentDetectionData = new DocumentDetectionData(data);
+        detection.setData(documentDetectionData);
     }
 
     @Override

@@ -10,10 +10,13 @@ public class DocumentDetectionData implements DetectionData<Integer[]> {
     public static final String PAGE = "document_page_number";
     public static final String IMAGE = "document_image_number";
 
+    @Getter
     private int pageNumber;
+
+    @Getter
     private int imageNumber;
 
-    DocumentDetectionData(Object[] data) {
+    public DocumentDetectionData(Object[] data) {
         storeDataFields(data);
     }
 

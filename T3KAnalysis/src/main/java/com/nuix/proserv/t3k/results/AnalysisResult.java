@@ -2,6 +2,8 @@ package com.nuix.proserv.t3k.results;
 
 import com.nuix.proserv.t3k.T3KApiException;
 import com.nuix.proserv.t3k.detections.Detection;
+import com.nuix.proserv.t3k.detections.DetectionTypeMap;
+import com.nuix.proserv.t3k.detections.DetectionWithData;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,8 +48,16 @@ public abstract class AnalysisResult {
     }
 
     protected void addDetection(Map<String, Object> detectionData) {
+        Detection detection = DetectionTypeMap.getDetection(detectionData);
 
+        if (detection instanceof DetectionWithData) {
+            addDataToDetection((DetectionWithData) detection, detectionData);
+        }
+
+        detections.add(detection);
     }
+
+    protected abstract void addDataToDetection(DetectionWithData detection, Map<String, Object> detectionData);
 
     public int getDetectionCount() {
         return detections.size();

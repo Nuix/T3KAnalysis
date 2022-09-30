@@ -11,7 +11,6 @@ import java.util.function.BiConsumer;
  * {@link #forEachDetail(BiConsumer)} method.
  */
 public class UnknownDetection extends Detection {
-    @Getter
     private Map<String, Object> details;
 
     private UnknownDetection() {}

@@ -41,7 +41,7 @@ public class DetectionTypeMap {
      *                      "type" key that determines the type of the detection to make.
      * @return A Detection instance whose type is specific to the data provided.
      */
-    private static Detection getDetection(Map<String, Object> detectionData) {
+    public static Detection getDetection(Map<String, Object> detectionData) {
         String type = (String) detectionData.get(Detection.TYPE);
 
         Class<? extends Detection> detectionClass = DETECTION_TYPE_MAP.getOrDefault(type, UnknownDetection.class);
