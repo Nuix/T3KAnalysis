@@ -1,6 +1,7 @@
 .idea
 .gradle
 gradle
+build
 gradlew
 gradlew.bat
 t3k_data_id.json

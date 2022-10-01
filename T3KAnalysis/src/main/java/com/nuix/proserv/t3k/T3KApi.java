@@ -1,6 +1,7 @@
 package com.nuix.proserv.t3k;
 
 import com.nuix.proserv.restclient.RestClient;
+import com.nuix.proserv.t3k.results.AnalysisResult;
 import com.nuix.proserv.t3k.results.PollResults;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -176,27 +177,7 @@ public class T3KApi {
                     });
                     return true;
                 default:
-                    if (500 <= returnCode && 599 >= returnCode) {
-                        // Server error.  Try again.
-                        LOG.info("Server Error: [{}] {}: {}",
-                                uploadRequestResults.get("message"),
-                                returnCode,
-                                uploadRequestResults.get("body")
-                        );
-
-                        return false;
-
-                    } else {
-                        // Unexpected value.  Assume it is bad and retry
-                        LOG.info(String.format(
-                                "Unexpected return value.  Trying again.  [%s] %d: %s",
-                                uploadRequestResults.get("message"),
-                                returnCode,
-                                uploadRequestResults.get("body")
-                        ));
-
-                        return false;
-                    }
+                    return handleServerErrors(uploadRequestResults);
 
             }
         });
@@ -242,31 +223,35 @@ public class T3KApi {
                         "The item id used for polling (%d) is not recognized", itemId
                     ));
                 default:
-                    if (500 <= pollResponseCode && 599 >= pollResponseCode) {
-                        // Server error.  Try again.
-                        LOG.info("Server Error: [{}] {}: {}",
-                                pollResponse.get("message"),
-                                pollResponseCode,
-                                pollResponse.get("body")
-                        );
-
-                        return false;
-                    } else {
-                        // Unexpected code.  Expect it to be bad and retry
-                        LOG.info(String.format(
-                                "Unexpected return value.  Trying again.  [%s] %d: %s",
-                                pollResponse.get("message"),
-                                pollResponseCode,
-                                pollResponse.get("body")
-                        ));
-
-                        return false;
-                    }
+                    return handleServerErrors(pollResponse);
             }
         });
 
 
         return pollResultsHolder.get("value");
+    }
+
+    private Boolean handleServerErrors(Map<String, Object> requestResponse) {
+        int responseCode = (int) requestResponse.get("code");
+        if (500 <= responseCode && 599 >= responseCode) {
+            // Server error.  Try again.
+            LOG.info("Server Error: [{}] {}: {}",
+                    requestResponse.get("message"),
+                    responseCode,
+                    requestResponse.get("body")
+            );
+
+        } else {
+            // Unexpected code.  Expect it to be bad and retry
+            LOG.info(String.format(
+                    "Unexpected return value.  Trying again.  [%s] %d: %s",
+                    requestResponse.get("message"),
+                    responseCode,
+                    requestResponse.get("body")
+            ));
+
+        }
+        return false;
     }
 
     static private class CycleQueueEntry {
@@ -371,5 +356,42 @@ public class T3KApi {
         });
 
         return resultsHolder[0];
+    }
+
+    public AnalysisResult getResults(long id) {
+        LOG.trace("Getting results for {}", id);
+
+
+        // This method uses a lambda function to get results.  The container variables are final relative to the
+        // lambda so use an array as a container.
+        AnalysisResult[] analysisResults = { null };
+
+        doWithRetries(() -> {
+            String endpoint = Endpoint.RESULT.get(String.valueOf(id));
+            Map<String, Object> resultResponse = client.get(Endpoint.RESULT.get(String.valueOf(id)));
+
+            int responseCode = (int)resultResponse.get("code");
+            String responseMessage = (String)resultResponse.get("message");
+            Object responseBody = resultResponse.get("body");
+            LOG.debug("Results Response: {}, {}", responseCode, responseBody);
+
+            switch(responseCode) {
+                case 200:
+                    // Success
+                    AnalysisResult result = AnalysisResult.parseResult((Map<String, Object>)responseBody);
+                    analysisResults[0] = result;
+                    return true;
+                case 400:
+                    // "Request was broken, not likely to fix it so error out
+                    throw new T3KApiException(String.format(
+                       "Malformed request to the server.  Endpoint: %s, ID: %d [%s]",
+                            Endpoint.RESULT, id, endpoint
+                    ));
+                default:
+                    return handleServerErrors(resultResponse);
+            }
+        });
+
+        return analysisResults[0];
     }
 }
