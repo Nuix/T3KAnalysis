@@ -1,6 +1,5 @@
 plugins {
     id("java")
-    id("maven-publish")
 }
 
 group = "com.nuix.proserv"
@@ -38,22 +37,12 @@ dependencies {
 
     implementation("com.nuix.proserv:T3KAnalysis:1.0-SNAPSHOT")
     implementation("com.google.code.gson:gson:2.8.9")
+    implementation("org.apache.logging.log4j:log4j-api:2.17.2")
+    implementation("org.apache.logging.log4j:log4j-core:2.17.2")
 
 //    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
 //    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
 
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = "org.gradle.sample"
-            artifactId = "library"
-            version = "1.1"
-
-            from(components["java"])
-        }
-    }
 }
 
 tasks.getByName<Test>("test") {
