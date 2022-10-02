@@ -11,13 +11,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.BlockingQueue;
 
-public class SingleItemAnalyzer extends Analyzer {
+public class SingleItemAnalyzer extends Analyzer<String> {
     private static final Logger LOG = LogManager.getLogger(SingleItemAnalyzer.class.getCanonicalName());
 
 
     public SingleItemAnalyzer(T3KApi api, String configPath, Configuration configuration, AnalysisListener listenerh) {
-        super(api, configPath, configuration, listenerh);
+        super(api, configPath, configuration, listenerh, null);
     }
 
     private long uploadFile(long sourceId, String fileName) {
@@ -92,7 +93,8 @@ public class SingleItemAnalyzer extends Analyzer {
         return analysisResult;
     }
 
-    public AnalysisResult analyze(String localFilePath) throws FileNotFoundException {
+    @Override
+    public void analyze(String localFilePath, BlockingQueue<AnalysisResult> completedResults) throws FileNotFoundException {
         Path localPath = Path.of(localFilePath);
         if (!Files.exists(localPath)) {
             throw new FileNotFoundException("The provided file can not be found. " + localFilePath);
@@ -117,20 +119,24 @@ public class SingleItemAnalyzer extends Analyzer {
             long resultId = uploadFile(nextId, fileName);
 
             if(-1L == resultId) {
-                return null;
+                return;
             }
 
             PollResults pollResults = waitForAnalysis(nextId, resultId, fileName);
 
             if(!pollResults.isFinished() || pollResults.isError()) {
-                return null;
+                return;
             }
 
             AnalysisResult analysisResult = getAnalysisResults(nextId, resultId, fileName);
 
             updateAnalysisCompleted("Analysis completed.");
 
-            return analysisResult;
+            try {
+                completedResults.put(analysisResult);
+            } catch (InterruptedException e) {
+                LOG.error("Sending the analysis results to the completed queue was interrupted.");
+            }
 
         } finally {
             try {

@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import com.nuix.proserv.t3k.T3KApi;
 import com.nuix.proserv.t3k.conn.config.Configuration;
 
+import com.nuix.proserv.t3k.detections.DetectionWithData;
 import com.nuix.proserv.t3k.results.AnalysisResult;
-import com.nuix.proserv.t3k.results.PollResults;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,9 +14,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Application {
     private static final Logger LOG = LogManager.getLogger(Application.class.getCanonicalName());
@@ -67,18 +68,76 @@ public class Application {
         serverSidePath = config.getT3k_server_path();
     }
 
-    public Map<String, AnalysisResult> analyze(List<String> itemsToAnalyze) throws FileNotFoundException {
+    public void analyze(List<String> itemsToAnalyze, BlockingQueue<AnalysisResult> completedResults) throws FileNotFoundException {
         if(1 == itemsToAnalyze.size()) {
 
             // single
             SingleItemAnalyzer analyzer = new SingleItemAnalyzer(api, configDirectory, config, analysisListener);
-            AnalysisResult results = analyzer.analyze(itemsToAnalyze.get(0));
-            return Map.of(itemsToAnalyze.get(0), results);
 
+            BlockingQueue<AnalysisResult> completedItems = new LinkedBlockingQueue<>();
+            analyzer.analyze(itemsToAnalyze.get(0), completedItems);
+
+            AnalysisResult results = null;
+            try {
+                results = completedItems.take();
+            } catch (InterruptedException e) {
+                LOG.error("Getting the results from the completed queue was interrupted");
+                try {
+                    completedResults.put(END_OF_ANALYSIS);
+                } catch (InterruptedException ex) {
+                    LOG.error("Signalling end of analysis (caused by interrupted getting results) was interrupted.");
+                }
+                return;
+            }
+
+            try {
+                completedResults.put(results);
+            } catch (InterruptedException e) {
+                LOG.error("Putting completed results into the result queue was interrupted.");
+            }
+
+            try {
+                completedResults.put(END_OF_ANALYSIS);
+            } catch (InterruptedException e) {
+                LOG.error("Signalling end of analysis (after completed results) was interrupted.");
+            }
         } else if (itemsToAnalyze.size() > 1) {
-            return Map.of();
+            LOG.info("Processing batches of items.");
+
+            BatchAnalyzer analyzer = new BatchAnalyzer(api, configDirectory, config, batchListener);
+
+            List<List<String>> batches = analyzer.buildBatches(itemsToAnalyze);
+            final int batchCount = batches.size();
+            int currentBatchIndex = 0;
+
+            for(List<String> batch : batches) {
+                currentBatchIndex++;
+
+                LOG.info("Processing batch {}/{}", currentBatchIndex, batchCount);
+                if(null != batchListener) {
+                    batchListener.batchStarted(currentBatchIndex, batchCount, String.format(
+                            "Processing Batch %d / %d", currentBatchIndex, batchCount
+                    ));
+                }
+
+                analyzer.analyze(batch, completedResults);
+
+                LOG.info("Finished batch {}/{}", currentBatchIndex, batchCount);
+                if(null != batchListener) {
+                    batchListener.batchStarted(currentBatchIndex, batchCount, String.format(
+                            "Completed Batch %d / %d", currentBatchIndex, batchCount
+                    ));
+                }
+            }
+
         } else {
-            return Map.of();
+            // Empty list, return an empty map.
+            LOG.warn("The list of items to analyze is empty.");
+            try {
+                completedResults.put(END_OF_ANALYSIS);
+            } catch (InterruptedException e) {
+                LOG.error("Signalling end of analysis (caused by no items to analyze) was interrupted.");
+            }
         }
     }
 
@@ -135,7 +194,17 @@ public class Application {
 
             String file = "C:\\Projects\\ProServ\\T3K\\Data\\processing\\71f218c4-9bdd-4701-8576-634eaccc1a86.jpg";
             List<String> toAnalyze = List.of(file);
-            AnalysisResult result = app.analyze(toAnalyze).get(file);
+            BlockingQueue<AnalysisResult> completedAnalysis = new LinkedBlockingQueue<>();
+
+            app.analyze(toAnalyze, completedAnalysis);
+
+            AnalysisResult result = null;
+            try {
+                result = completedAnalysis.take();
+            } catch (InterruptedException e) {
+                LOG.error("Taking the results from analysis was interrupted");
+            }
+
             LOG.info("Results: {}", result);
 
         } catch (IOException e) {
@@ -143,4 +212,12 @@ public class Application {
         }
 
     }
+
+    public static final AnalysisResult END_OF_ANALYSIS = new AnalysisResult() {
+        @Override
+        protected void addDataToDetection(DetectionWithData detectionWithData, Map<String, Object> map) {
+            // Do nothing
+        }
+    };
+
 }
