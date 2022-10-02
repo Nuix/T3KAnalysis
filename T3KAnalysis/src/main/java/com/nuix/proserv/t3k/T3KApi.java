@@ -71,7 +71,7 @@ public class T3KApi {
 
         // Using arrays to hold the mutable values as the outer scope to lambdas is considered final.
         long[] sourceIdHolder = { sourceId };
-        long[] resultIdHolder = { 0L };
+        long[] resultIdHolder = { -1L };
 
         doWithRetries(() -> {
 
