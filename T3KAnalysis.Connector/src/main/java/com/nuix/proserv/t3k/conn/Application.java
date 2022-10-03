@@ -90,7 +90,7 @@ public class Application {
         serverSidePath = config.getT3k_server_path();
     }
 
-    public void analyze(List<String> itemsToAnalyze, BlockingQueue<AnalysisResult> completedResults) throws FileNotFoundException {
+    public void analyze(List<String> itemsToAnalyze, BlockingQueue<AnalysisResult> completedResults) {
         if(1 == itemsToAnalyze.size()) {
 
             // single
@@ -215,7 +215,6 @@ public class Application {
             }
         };
 
-        try {
             Application app = new Application(configFile.getAbsolutePath());
             app.setBatchListener(batcher);
             app.setAnalysisListener(analizer);
@@ -234,10 +233,6 @@ public class Application {
             }
 
             LOG.info("Results: {}", result);
-
-        } catch (IOException e) {
-            LOG.error(e);
-        }
 
     }
 

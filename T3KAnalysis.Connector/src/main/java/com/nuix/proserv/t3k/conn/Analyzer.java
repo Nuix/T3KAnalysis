@@ -36,7 +36,7 @@ public abstract class Analyzer<T> {
         this.bacthListener = batchListener;
     }
 
-    public abstract void analyze(T toAnalyze, BlockingQueue<AnalysisResult> completedResults) throws FileNotFoundException;
+    public abstract void analyze(T toAnalyze, BlockingQueue<AnalysisResult> completedResults);
 
     protected String getServerSidePath() {
         return config.getT3k_server_path();

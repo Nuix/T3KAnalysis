@@ -1,14 +1,14 @@
 package com.nuix.proserv.ws;
 
+import com.nuix.proserv.t3k.conn.AnalysisListener;
 import com.nuix.proserv.t3k.conn.Application;
+import com.nuix.proserv.t3k.conn.BatchListener;
+import com.nuix.proserv.t3k.results.AnalysisResult;
 import lombok.Getter;
+import nuix.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
-
-import nuix.Utilities;
-import nuix.Item;
-import nuix.SingleItemExporter;
 
 import com.nuix.proserv.t3k.conn.config.Configuration;
 
@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class ScriptingBase {
@@ -35,9 +37,12 @@ public class ScriptingBase {
 
     private final String pathToConfig;
 
+    private final Case current_case;
 
-    public ScriptingBase(Utilities utilities, String pathToConfig) {
+
+    public ScriptingBase(Utilities utilities, Case current_case, String pathToConfig) {
         this.utilities = utilities;
+        this.current_case = current_case;
         this.pathToConfig = pathToConfig;
 
         this.app = new Application(pathToConfig);
@@ -81,7 +86,88 @@ public class ScriptingBase {
         return exportedItems;
     }
 
-    public void analyze(List<String> filesToAnalyze) {
+    public void processResults(BlockingQueue<AnalysisResult> results) {
+
+        while(true) {
+            AnalysisResult currentResult = null;
+
+            try {
+                currentResult = results.take();
+            } catch (InterruptedException e) {
+                LOG.info("Getting the next item from the queue was interrupted.  Trying again.");
+                continue;
+            }
+
+            if (Application.END_OF_ANALYSIS.equals(currentResult)) {
+                LOG.trace("Came to the end of the queue, exiting work.");
+                break;
+            }
+
+            String filePath = currentResult.getFile();
+            String fileName = Path.of(filePath).getFileName().toString();
+            String guid = fileName.split("\\.")[0];
+
+            String guidSearch = String.format("guid:%s", guid);
+            try {
+                List<Item> foundItems = current_case.search(guidSearch);
+                // Item list should be a singleton, but iterate anyway just to be safe...
+                for(Item foundItem : foundItems) {
+                    CustomMetadataMap metadataMap = foundItem.getCustomMetadata();
+
+                }
+            } catch (IOException e) {
+                LOG.error("{} while searching the case for item with guid {}.  Skipping results for this item",
+                        e.getMessage(), guid);
+            }
+        }
+    }
+
+    public void analyze(List<String> filesToAnalyze, StatusListener statusListener, ProgressListener progressListener) {
+        BlockingQueue<AnalysisResult> completedResults = new LinkedBlockingQueue<>();
+
+        AnalysisListener analysisListener = new AnalysisListener() {
+            @Override
+            public void analysisStarted(String message) {
+                statusListener.updateStatus(message);
+            }
+
+            @Override
+            public void analysisUpdated(int index, int count, String message) {
+                progressListener.updateProgress(index, count, message);
+            }
+
+            @Override
+            public void analysisCompleted(String message) {
+                statusListener.updateStatus(message);
+            }
+
+            @Override
+            public void analysisError(String message) {
+                LOG.error(message);
+            }
+        };
+
+        BatchListener batchListener = new BatchListener() {
+            @Override
+            public void batchStarted(int batch, int batchCount, String message) {
+                progressListener.updateProgress(batch, batchCount, "START: " + message);
+            }
+
+            @Override
+            public void batchUpdated(int index, int count, String message) {
+                progressListener.updateProgress(index, count, "UPDATE: " + message);
+            }
+
+            @Override
+            public void batchCompleted(int batch, int batchCount, String message) {
+                progressListener.updateProgress(batch, batchCount, "DONE: " + message);
+            }
+        };
+
+        app.setAnalysisListener(analysisListener);
+        app.setBatchListener(batchListener);
+
+        app.analyze(filesToAnalyze, completedResults);
 
     }
 }

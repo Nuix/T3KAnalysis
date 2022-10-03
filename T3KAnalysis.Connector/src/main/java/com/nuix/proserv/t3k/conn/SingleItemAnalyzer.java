@@ -94,15 +94,16 @@ public class SingleItemAnalyzer extends Analyzer<String> {
     }
 
     @Override
-    public void analyze(String localFilePath, BlockingQueue<AnalysisResult> completedResults) throws FileNotFoundException {
+    public void analyze(String localFilePath, BlockingQueue<AnalysisResult> completedResults) {
         Path localPath = Path.of(localFilePath);
         if (!Files.exists(localPath)) {
-            throw new FileNotFoundException("The provided file can not be found. " + localFilePath);
+            LOG.warn("The file to process ({}) does not exist, doing nothing.", localFilePath);
+            return;
         }
 
         if (Files.isDirectory(localPath)) {
-            throw new IllegalArgumentException("The provided file to analyze is a directory, only a single file can be" +
-                    " processed using this method.  To analyze multiple files use the \"batchAnalyze\" method.");
+            LOG.warn("The passed in path is a directory ({}).  To do batch processing use a list of files rather than a directory of files.", localFilePath);
+            return;
         }
 
         String fileName = localPath.getFileName().toString();
