@@ -6,6 +6,7 @@ import com.nuix.proserv.t3k.conn.config.Configuration;
 
 import com.nuix.proserv.t3k.detections.DetectionWithData;
 import com.nuix.proserv.t3k.results.AnalysisResult;
+import lombok.Getter;
 import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +26,7 @@ public class Application {
 
     private final String configDirectory;
 
+    @Getter
     private final Configuration config;
 
     private final String exportLocation;
@@ -37,22 +39,38 @@ public class Application {
     @Setter
     private AnalysisListener analysisListener;
 
-    public Application(String pathToConfig) throws IOException {
+    public Application(String pathToConfig) {
         File configFile = new File(pathToConfig);
-        if(!configFile.exists()) {
-            throw new FileNotFoundException("The configuration can not be found: " + pathToConfig);
-        }
-
-        if(configFile.isDirectory()) {
-            throw new IllegalArgumentException("The configuration needs to be the path to a settings file, but a directory was provided: " + pathToConfig);
-        }
-
         configDirectory = configFile.getParent();
         LOG.debug("Configuration is in {}", configDirectory);
 
-        FileReader reader = new FileReader(configFile);
-        Gson gson = new Gson();
-        config = gson.fromJson(reader, Configuration.class);
+        String configState = "OK";
+
+        FileReader reader = null;
+
+        if(configFile.isDirectory()) {
+            LOG.error("The configuration needs to be the path to a settings file, but a directory was provided: {}", pathToConfig);
+            LOG.error("Using default configurations.");
+            configState = "ERROR";
+        } else if(!configFile.exists()) {
+            LOG.error("The configuration file {} was not found.  Using defaults", pathToConfig);
+            configState = "ERROR";
+        } else {
+
+            try {
+                reader = new FileReader(configFile);
+            } catch (FileNotFoundException e) {
+                LOG.error("Config file {} not found: {}.  Using defaults instead.", pathToConfig, e.getMessage());
+                configState = "ERROR";
+            }
+        }
+
+        if ("ERROR".equals(configState)) {
+            config = new Configuration();
+        } else {
+            Gson gson = new Gson();
+            config = gson.fromJson(reader, Configuration.class);
+        }
         LOG.debug("Configuration: " + config);
 
         api = new T3KApi(config.getT3k_server_url(), config.getT3k_server_port(),
@@ -62,7 +80,11 @@ public class Application {
 
         Path pathToExport = Path.of(exportLocation);
         if(!Files.exists(pathToExport)) {
-            Files.createDirectories(pathToExport);
+            try {
+                Files.createDirectories(pathToExport);
+            } catch (IOException e) {
+                LOG.error("Path to export data does not exist and can't be created.  This will lead to export errors later.");
+            }
         }
 
         serverSidePath = config.getT3k_server_path();
@@ -127,6 +149,12 @@ public class Application {
                     batchListener.batchStarted(currentBatchIndex, batchCount, String.format(
                             "Completed Batch %d / %d", currentBatchIndex, batchCount
                     ));
+                }
+
+                try {
+                    completedResults.put(END_OF_ANALYSIS);
+                } catch (InterruptedException e) {
+                    LOG.error("Signalling end of analysis (at the end of batch analysis) was interrupted.");
                 }
             }
 
@@ -219,5 +247,4 @@ public class Application {
             // Do nothing
         }
     };
-
 }

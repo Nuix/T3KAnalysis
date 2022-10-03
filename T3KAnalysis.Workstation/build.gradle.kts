@@ -1,14 +1,13 @@
 plugins {
     id("java")
-    id("maven-publish")
 }
 
 group = "com.nuix.proserv"
-version = "1.0.1-SNAPSHOT"
-
+version = "1.0-SNAPSHOT"
 val sourceCompatibility = 11
 val targetCompatibility = 11
 val nuixEngineVersion = "9.6.9.509"
+
 
 repositories {
     maven {
@@ -22,8 +21,8 @@ repositories {
         url = uri("https://artifactory.uat.nuix.com/ui/native/rest-maven-virtual")
     }*/
 
+    // My local Java libs
     /*flatDir {
-        // My local Java libs
         dirs("C:\\Projects\\Libraries\\Java_Libs")
     }*/
 
@@ -44,29 +43,15 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.10")
 
     implementation("com.nuix.proserv:T3KAnalysis:1.0-SNAPSHOT")
+    implementation("com.nuix.proserv:T3KAnalysis.Connector:1.0.1-SNAPSHOT")
     implementation("com.google.code.gson:gson:2.8.9")
     implementation("org.apache.logging.log4j:log4j-api:2.17.2")
     implementation("org.apache.logging.log4j:log4j-core:2.17.2")
-    implementation("org.apache.commons:commons-collections4:4.4")
+    implementation(":nuix-scripting-api:$nuixEngineVersion")
+    implementation(":nuix-scripting-impl:$nuixEngineVersion")
 
-    compileOnly(":nuix-scripting-api:$nuixEngineVersion")
-
-
-//    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-//    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
-
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = group.toString()
-            artifactId = project.name
-            version = version
-
-            from(components["java"])
-        }
-    }
+    //testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    //testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
 }
 
 tasks.getByName<Test>("test") {

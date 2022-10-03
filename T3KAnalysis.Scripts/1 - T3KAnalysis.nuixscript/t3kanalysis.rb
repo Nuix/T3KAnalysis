@@ -7,25 +7,42 @@ LOGGER.progname "Nuix T3K Connector"
 LOGGER.log_level :debug
 LOGGER.add_output File.new File.join(current_case.get_location.get_absolute_path, Time.now.strftime("T3K_Analysis_%Y%m%d_%H.%M.%S.log")), "w"
 
+$utilities = utilities
+$items_to_export = current_selectect_items
+
 begin
   require_relative 'ui/processing_screen'
-  require_relative 'processing/application'
 
+  java_import "com.nuix.proserv.t3k.conn.Application"
+  java_import "com.google.gson.Gson"
+  java_import "java.util.Map"
 
-  def export_selected_items(items, progress)
-    config = read_config
-    export_path = config["nuix_output_path"]
-    item_count = items.size
-    index = 0
-    items.each do |item|
-      index += 1
-      progress.set_main_progress index, item_count
+  settings = File.join(ENV['ProgramData'], 'Nuix', 'Nuix T3K Analysis', 't3k_settings.json')
+  $app_config = Gson.new.fromJson File.read(settings), Map.java_class
+
+  def export_selected_items(listener)
+
+    exporter = $utilities.binary_exporter
+    exported_paths = []
+
+    item_count $items_to_export.size
+    current_item_index = 0
+
+    listener.update 0, item_count, "Starting export of selected items."
+    $items_to_export.each do | item |
+      current_item_index += 1
+
+      output_name = "#{item.guid}.#{item.corrected_extension}"
+
+      output_path = File.join $app_config["nuix_output_path"], output_name
+
       LOGGER.info "Exporting #{item.name}: #{item.guid}"
+      exporter.export_item item, output_path
+      listener.update current_item_index, item_count, "Exported #{item.name} to #{output_name}"
 
-      export_file = File.join export_path, "#{item.guid}.#{item.original_extension}"
-      exporter = $utilities.binary_exporter
-      exporter.export_item item, export_file, {}
+      exported_paths << output_path
     end
+
   end
 
   def assign_custom_metadata(source_items, analysis_results, report)

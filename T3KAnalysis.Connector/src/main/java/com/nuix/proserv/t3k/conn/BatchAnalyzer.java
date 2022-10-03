@@ -159,11 +159,6 @@ public class BatchAnalyzer extends Analyzer<List<String>> {
         completedItems.add(END_OF_QUEUE);
 
         collectResults(itemCount, completedItems, completedResults);
-        try {
-            completedResults.put(Application.END_OF_ANALYSIS);
-        } catch (InterruptedException e) {
-            LOG.error("Adding the end of analysis failed with an interruption.");
-        }
     }
 
     private static final PollResults END_OF_QUEUE = PollResults.parseResults(Map.of(
