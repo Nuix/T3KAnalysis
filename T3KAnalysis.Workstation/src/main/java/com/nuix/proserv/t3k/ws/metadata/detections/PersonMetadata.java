@@ -1,4 +1,4 @@
-package com.nuix.proserv.ws.metadata.detections;
+package com.nuix.proserv.t3k.ws.metadata.detections;
 
 import com.nuix.proserv.t3k.detections.Detection;
 import com.nuix.proserv.t3k.detections.PersonDetection;
@@ -7,8 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class PersonMetadata extends DetectionMetadata implements MetadataWithScore {
-    private static final Logger LOG = LogManager.getLogger(PersonMetadata.class.getCanonicalName());
-
     private static final String T3K_PERSON = String.format(T3K_TEMPLATE, "%d", "Person");
     private static final String T3K_AGE = String.format("%s|%s", T3K_PERSON, "Age");
     private static final String T3K_GENDER = String.format("%s|%s", T3K_PERSON, "Gender");

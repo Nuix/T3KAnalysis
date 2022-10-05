@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 
 public abstract class Analyzer<T> {
-    private static final Logger LOG = LogManager.getLogger(Analyzer.class.getCanonicalName());
+    protected static final Logger LOG = LogManager.getLogger(Application.LOGGER_NAME);
 
     private final Configuration config;
 

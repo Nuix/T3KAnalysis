@@ -66,9 +66,9 @@ public class ImageResult extends AnalysisResult implements HashedResult, Rastere
             ImageResult result = new ImageResult();
 
             result.mode = (String)metadata.get(MODE);
-            result.width = (int)metadata.get(WIDTH);
-            result.height = (int)metadata.get(HEIGHT);
-            result.fileSize = (long)metadata.get(BYTES);
+            result.width = ((Number)metadata.get(WIDTH)).intValue();
+            result.height = ((Number)metadata.get(HEIGHT)).intValue();
+            result.fileSize = ((Number)metadata.get(BYTES)).longValue();
             result.imageSize = (String)metadata.get(IMAGE_SIZE);
             result.md5 = (String)metadata.getOrDefault(MD5, "");
             result.sha1 = (String)metadata.getOrDefault(SHA1, "");

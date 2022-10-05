@@ -1,5 +1,6 @@
 package com.nuix.proserv.t3k.results;
 
+import com.nuix.proserv.t3k.T3KApi;
 import com.nuix.proserv.t3k.T3KApiException;
 import com.nuix.proserv.t3k.detections.Detection;
 import com.nuix.proserv.t3k.detections.DetectionTypeMap;
@@ -15,7 +16,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class AnalysisResult {
-    private static final Logger LOG = LogManager.getLogger(AnalysisResult.class.getCanonicalName());
+    protected static final Logger LOG = LogManager.getLogger(T3KApi.LOGGER_NAME);
 
     public static final String METADATA = "metadata";
     public static final String ID = "id";

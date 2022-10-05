@@ -1,14 +1,14 @@
-package com.nuix.proserv.ws.metadata.detections;
+package com.nuix.proserv.t3k.ws.metadata.detections;
 
 import com.nuix.proserv.t3k.detections.Detection;
 import com.nuix.proserv.t3k.detections.ObjectDetection;
+import com.nuix.proserv.t3k.ws.metadata.T3KMetadata;
 import nuix.CustomMetadataMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class ObjectMetadata  extends DetectionMetadata implements MetadataWithScore {
-    private static final Logger LOG = LogManager.getLogger(ObjectMetadata.class.getCanonicalName());
-    private static final String T3K_CLASSIFICATION = String.format(T3K_TEMPLATE, "%s", "%s");
+    private static final String T3K_CLASSIFICATION = String.format(T3KMetadata.T3K_TEMPLATE, "%s", "%s");
 
     protected ObjectMetadata(CustomMetadataMap map) {
         super(map);

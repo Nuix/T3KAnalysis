@@ -60,7 +60,7 @@ public class PollResults {
     }
 
     public static PollResults parseResults(Map<String, Object> body) {
-        long id = (long)body.get(ID);
+        long id = ((Number)body.get(ID)).longValue();
         String path = (String)body.get(FILEPATH);
         String type = (String)body.get(RESULT_TYPE);
         boolean finished = (boolean) body.get(FINISHED);

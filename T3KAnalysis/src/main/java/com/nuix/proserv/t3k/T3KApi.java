@@ -15,7 +15,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
 public class T3KApi {
-    private static final Logger LOG = LogManager.getLogger(T3KApi.class.getCanonicalName());
+    public static final String LOGGER_NAME = "com.nuix.proserv.t3k";
+    private static final Logger LOG = LogManager.getLogger(LOGGER_NAME);
     private final RestClient client;
     private final int batchSize;
     private final int retryCount;

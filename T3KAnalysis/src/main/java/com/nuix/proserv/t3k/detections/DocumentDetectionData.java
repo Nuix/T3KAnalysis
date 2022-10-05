@@ -47,16 +47,16 @@ public class DocumentDetectionData implements DetectionData<Integer[]> {
                         PAGE, detectionData[0]
                 ));
             } else {
-                pageNumber = (int)detectionData[1];
+                pageNumber = ((Number)detectionData[1]).intValue();
             }
         } else {
             // [key, value], [key, value] format
             Arrays.stream(detectionData).forEach(entry -> {
                 Object[] dataPoint = (Object[]) entry;
                 if(PAGE.equals(dataPoint[0])) {
-                    pageNumber = (int)dataPoint[1];
+                    pageNumber = ((Number)dataPoint[1]).intValue();
                 } else if (IMAGE.equals(dataPoint[0])) {
-                    imageNumber = (int) dataPoint[1];
+                    imageNumber = ((Number)dataPoint[1]).intValue();
                 } else {
                     // unexpected key
                     throw new T3KApiException(String.format(

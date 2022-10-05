@@ -1,30 +1,71 @@
-package com.nuix.proserv.ws;
+package com.nuix.proserv.t3k.ws;
 
 import com.nuix.proserv.t3k.conn.AnalysisListener;
 import com.nuix.proserv.t3k.conn.Application;
 import com.nuix.proserv.t3k.conn.BatchListener;
 import com.nuix.proserv.t3k.results.AnalysisResult;
+import com.nuix.proserv.t3k.ws.metadata.AnalysisMetadata;
 import lombok.Getter;
 import nuix.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import com.google.gson.Gson;
+
 
 import com.nuix.proserv.t3k.conn.config.Configuration;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.config.AppenderRef;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class ScriptingBase {
-    private static final Logger LOG = LogManager.getLogger(ScriptingBase.class.getCanonicalName());
+    public static final String LOGGING_NAME = "com.nuix.proserv.t3k";
+    private static Logger LOG;
+
+    public static synchronized Logger initLogging(String logFile, String logLevel) {
+        if (null != LOG) {
+            return LOG;
+        }
+
+
+        Level level = Level.toLevel(logLevel, Level.ERROR);
+
+        LoggerContext context = (LoggerContext) LogManager.getContext(false);
+        Layout<String> layout = PatternLayout.newBuilder().withPattern(
+                "%d{yyyy-MM-dd HH:mm:ss.SSS Z}: %c{1.} [%-5p] %m%ex{full}%n").build();
+        org.apache.logging.log4j.core.config.Configuration config = context.getConfiguration();
+
+        String fileAppenderName = "T3K_File";
+        Appender appender = FileAppender.newBuilder().withFileName(logFile).withAppend(true).withCreateOnDemand(true)
+                        .withLocking(false).withImmediateFlush(true).withBufferedIo(false).withBufferSize(1024)
+                        .setName(fileAppenderName).setConfiguration(config).withAdvertise(false).withAdvertiseUri(null)
+                        .setLayout(layout).build();
+        appender.start();
+        config.addAppender(appender);
+
+        AppenderRef ref = AppenderRef.createAppenderRef(fileAppenderName, level, null);
+        AppenderRef[] refs = new AppenderRef[] { ref };
+
+        LoggerConfig loggerConfig = LoggerConfig.createLogger(false, level, LOGGING_NAME,
+                "true", refs, null, config, null);
+        loggerConfig.addAppender(appender, level, null);
+
+        config.addLogger(LOGGING_NAME, loggerConfig);
+        context.updateLoggers();
+
+        LOG = LogManager.getLogger(LOGGING_NAME);
+        return LOG;
+    }
 
     @Getter
     private final Utilities utilities;
@@ -113,7 +154,8 @@ public class ScriptingBase {
                 // Item list should be a singleton, but iterate anyway just to be safe...
                 for(Item foundItem : foundItems) {
                     CustomMetadataMap metadataMap = foundItem.getCustomMetadata();
-
+                    AnalysisMetadata metadataApplier = AnalysisMetadata.getInstance(currentResult, metadataMap);
+                    metadataApplier.applyResults();
                 }
             } catch (IOException e) {
                 LOG.error("{} while searching the case for item with guid {}.  Skipping results for this item",
@@ -122,8 +164,7 @@ public class ScriptingBase {
         }
     }
 
-    public void analyze(List<String> filesToAnalyze, StatusListener statusListener, ProgressListener progressListener) {
-        BlockingQueue<AnalysisResult> completedResults = new LinkedBlockingQueue<>();
+    public void analyze(List<String> filesToAnalyze, BlockingQueue<AnalysisResult> completedResults, StatusListener statusListener, ProgressListener progressListener) {
 
         AnalysisListener analysisListener = new AnalysisListener() {
             @Override

@@ -1,5 +1,6 @@
 package com.nuix.proserv.t3k.detections;
 
+import com.nuix.proserv.t3k.T3KApi;
 import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +19,7 @@ import java.util.Map;
  * one.
  */
 public abstract class Detection {
-    private static final Logger LOG = LogManager.getLogger(Detection.class.getCanonicalName());
+    protected static final Logger LOG = LogManager.getLogger(T3KApi.LOGGER_NAME);
     
     public static final String TYPE = "type";
     public static final String INFO = "info";

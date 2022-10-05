@@ -14,9 +14,6 @@ import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 
 public class SingleItemAnalyzer extends Analyzer<String> {
-    private static final Logger LOG = LogManager.getLogger(SingleItemAnalyzer.class.getCanonicalName());
-
-
     public SingleItemAnalyzer(T3KApi api, String configPath, Configuration configuration, AnalysisListener listenerh) {
         super(api, configPath, configuration, listenerh, null);
     }

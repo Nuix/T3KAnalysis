@@ -1,4 +1,4 @@
-package com.nuix.proserv.ws.metadata;
+package com.nuix.proserv.t3k.ws.metadata;
 
 import com.nuix.proserv.t3k.results.AnalysisResult;
 import nuix.CustomMetadataMap;

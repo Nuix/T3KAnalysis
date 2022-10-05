@@ -21,7 +21,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Application {
-    private static final Logger LOG = LogManager.getLogger(Application.class.getCanonicalName());
+
+    public static final String LOGGER_NAME = "com.nuix.proserv.t3k";
+    private static final Logger LOG = LogManager.getLogger(LOGGER_NAME);
     private final T3KApi api;
 
     private final String configDirectory;
@@ -193,7 +195,7 @@ public class Application {
             }
         };
 
-        AnalysisListener analizer = new AnalysisListener() {
+        AnalysisListener analyzer = new AnalysisListener() {
             @Override
             public void analysisStarted(String message) {
                 LOG.info("Analysis started: {}", message);
@@ -217,7 +219,7 @@ public class Application {
 
             Application app = new Application(configFile.getAbsolutePath());
             app.setBatchListener(batcher);
-            app.setAnalysisListener(analizer);
+            app.setAnalysisListener(analyzer);
 
             String file = "C:\\Projects\\ProServ\\T3K\\Data\\processing\\71f218c4-9bdd-4701-8576-634eaccc1a86.jpg";
             List<String> toAnalyze = List.of(file);

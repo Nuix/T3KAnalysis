@@ -1,5 +1,6 @@
 package com.nuix.proserv.t3k.detections;
 
+import com.nuix.proserv.t3k.T3KApi;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,7 +23,8 @@ import java.util.Map;
  * map will need to change.
  */
 public class DetectionTypeMap {
-    private static final Logger LOG = LogManager.getLogger(DetectionTypeMap.class.getCanonicalName());
+    private static final Logger LOG = LogManager.getLogger(T3KApi.LOGGER_NAME);
+
     private static final Map<String, Class<? extends Detection>> DETECTION_TYPE_MAP = Collections.unmodifiableMap(
             Map.of(PersonDetection.TYPE, PersonDetection.class,
                     ObjectDetection.TYPE, ObjectDetection.class,

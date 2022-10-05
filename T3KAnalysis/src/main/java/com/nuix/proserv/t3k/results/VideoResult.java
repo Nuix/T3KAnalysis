@@ -75,13 +75,21 @@ public class VideoResult extends AnalysisResult implements RasteredResult, Resul
         if(isVideoResult(metadata)) {
             VideoResult result = new VideoResult();
 
-            result.frameCount = (int) metadata.get(FRAME_COUNT);
-            result.framesPerSecond = (int) metadata.get(FPS);
-            result.keyFrameList = (int[])metadata.get(KEYFRAMES);
-            result.keyFrameSearch = (int) metadata.get(KEYFRAME_SEARCH);
+            result.frameCount = ((Number)metadata.get(FRAME_COUNT)).intValue();
+            result.framesPerSecond = ((Number)metadata.get(FPS)).intValue();
+            //result.keyFrameList = Arrays.stream((Number[])metadata.get(KEYFRAMES)).map(keyframe -> keyframe.intValue());
+            Object[] kfArray = (Object[])metadata.get(KEYFRAMES);
+            int[] numArray = new int[kfArray.length];
 
-            result.width = (int)metadata.get(WIDTH);
-            result.height = (int)metadata.get(HEIGHT);
+            for(int i = 0; i < kfArray.length; i++) {
+                numArray[i] = ((Number)kfArray[i]).intValue();
+            }
+
+            result.keyFrameList = numArray;
+            result.keyFrameSearch = ((Number)metadata.get(KEYFRAME_SEARCH)).intValue();
+
+            result.width = ((Number)metadata.get(WIDTH)).intValue();
+            result.height = ((Number)metadata.get(HEIGHT)).intValue();
             result.nalvisString = (String)metadata.getOrDefault(NALVIS, "");
 
             AnalysisResult.fillSharedFields(result, metadata);

@@ -88,13 +88,19 @@ public class DocumentResult extends AnalysisResult implements HashedResult {
 
             DocumentResult result = new DocumentResult();
 
-            result.pageCount = (int)metadata.get(PAGE_COUNT);
-            result.imageCount = (int)metadata.get(IMAGE_COUNT);
+            result.pageCount = ((Number)metadata.get(PAGE_COUNT)).intValue();
+            result.imageCount = ((Number)metadata.get(IMAGE_COUNT)).intValue();
             result.md5 = (String)metadata.get(MD5);
             result.sha1 = (String)metadata.get(SHA1);
             result.type = (String)metadata.get(TYPE);
             result.hasText = (boolean)metadata.get(HAS_TEXT);
-            result.imageIds = (int[])metadata.get(IMAGE_IDS);
+
+            //result.imageIds = (int[])metadata.get(IMAGE_IDS);
+            Object[] ids = (Object[])metadata.get(IMAGE_IDS);
+            int[] imIds = new int[ids.length];
+            for(int i = 0; i < ids.length; i++) {
+                imIds[i] = ((Number)ids[i]).intValue();
+            }
 
             DocumentResult.fillSharedFields(result, metadata);
 

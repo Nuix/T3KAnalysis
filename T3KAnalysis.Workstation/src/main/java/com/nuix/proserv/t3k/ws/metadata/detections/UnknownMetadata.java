@@ -1,4 +1,4 @@
-package com.nuix.proserv.ws.metadata.detections;
+package com.nuix.proserv.t3k.ws.metadata.detections;
 
 import com.nuix.proserv.t3k.detections.Detection;
 import nuix.CustomMetadataMap;

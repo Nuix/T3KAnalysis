@@ -17,7 +17,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class BatchAnalyzer extends Analyzer<List<String>> {
-    private static final Logger LOG = LogManager.getLogger(BatchAnalyzer.class.getCanonicalName());
 
     protected BatchAnalyzer(T3KApi api, String configPath, Configuration configuration, BatchListener listener) {
         super(api, configPath, configuration, null, listener);

@@ -39,8 +39,8 @@ dependencies {
     // If using a file in a folder use this
     //implementation(":JavaRESTClient:1.0.1-SNAPSHOT")
     //implementation("commons-io:commons-io:2.8.0")
-    //implementation("org.apache.logging.log4j:log4j-core:2.17.2")
-    //implementation("org.apache.logging.log4j:log4j-api:2.17.2")
+    //implementation("org.apache.logging.log4j:log4j-core:2.17.1")
+    //implementation("org.apache.logging.log4j:log4j-api:2.17.1")
     //implementation("org.apache.httpcomponents:httpclient:4.5.13")
     //implementation("org.apache.httpcomponents:httpmime:4.5.13")
     //implementation("com.googlecode.json-simple:json-simple:1.1.1")

@@ -30,7 +30,7 @@ public class VideoDetectionData implements DetectionData<Integer> {
             ));
         }
         if(VIDEO_FRAME.equals(detectionData[0])) {
-            frame = (Integer)detectionData[1];
+            frame = ((Number)detectionData[1]).intValue();
         } else {
             throw new T3KApiException(String.format(
                 "The key term \"frame\" not found in the data.  %s",

@@ -1,8 +1,8 @@
-package com.nuix.proserv.ws.metadata;
+package com.nuix.proserv.t3k.ws.metadata;
 
 import com.nuix.proserv.t3k.detections.Detection;
 import com.nuix.proserv.t3k.results.AnalysisResult;
-import com.nuix.proserv.ws.metadata.detections.DetectionMetadata;
+import com.nuix.proserv.t3k.ws.metadata.detections.DetectionMetadata;
 import nuix.CustomMetadataMap;
 
 public class ImageMetadata extends AnalysisMetadata {

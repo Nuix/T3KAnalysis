@@ -1,10 +1,11 @@
-package com.nuix.proserv.ws.metadata;
+package com.nuix.proserv.t3k.ws.metadata;
 
 import com.nuix.proserv.t3k.detections.Detection;
 import com.nuix.proserv.t3k.results.AnalysisResult;
 import com.nuix.proserv.t3k.results.DocumentResult;
 import com.nuix.proserv.t3k.results.ImageResult;
 import com.nuix.proserv.t3k.results.VideoResult;
+import com.nuix.proserv.t3k.ws.ScriptingBase;
 import lombok.Getter;
 import nuix.CustomMetadataMap;
 import org.apache.logging.log4j.LogManager;
@@ -13,8 +14,8 @@ import org.apache.logging.log4j.Logger;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
-public abstract class AnalysisMetadata {
-    private static final Logger LOG = LogManager.getLogger(AnalysisMetadata.class.getCanonicalName());
+public abstract class AnalysisMetadata implements T3KMetadata {
+    protected static final Logger LOG = LogManager.getLogger(ScriptingBase.LOGGING_NAME);
 
     private static final Map<String, Class<? extends AnalysisMetadata>> ANALYSIS_METADATA_TYPES = Map.of(
             ImageResult.class.getCanonicalName(), ImageMetadata.class,
@@ -34,7 +35,14 @@ public abstract class AnalysisMetadata {
     }
 
     public void applyResults() {
-        analysisResult.forEachDetection(this::applyDetection);
+        int detectionCount = analysisResult.getDetectionCount();
+
+        if(0 == detectionCount) {
+            getMetadataMap().putText(T3K_DETECTION, T3K_NO_MATCHES);
+        } else {
+            getMetadataMap().putText(T3K_DETECTION, T3K_MATCH_FOUND);
+            analysisResult.forEachDetection(this::applyDetection);
+        }
     }
 
     protected abstract void applyDetection(Detection detection);

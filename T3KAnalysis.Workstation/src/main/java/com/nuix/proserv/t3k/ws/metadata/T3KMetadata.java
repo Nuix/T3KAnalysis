@@ -1,4 +1,4 @@
-package com.nuix.proserv.ws.metadata;
+package com.nuix.proserv.t3k.ws.metadata;
 
 public interface T3KMetadata {
     String T3K_DETECTION = "T3K Detections";

@@ -1,8 +1,8 @@
-package com.nuix.proserv.ws.metadata.detections;
+package com.nuix.proserv.t3k.ws.metadata.detections;
 
-import com.nuix.proserv.t3k.detections.Detection;
-import com.nuix.proserv.t3k.detections.PersonDetection;
-import com.nuix.proserv.ws.metadata.T3KMetadata;
+import com.nuix.proserv.t3k.detections.*;
+import com.nuix.proserv.t3k.ws.ScriptingBase;
+import com.nuix.proserv.t3k.ws.metadata.T3KMetadata;
 import lombok.Getter;
 import nuix.CustomMetadataMap;
 import org.apache.logging.log4j.LogManager;
@@ -12,10 +12,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 public abstract class DetectionMetadata implements T3KMetadata {
-    private static final Logger LOG = LogManager.getLogger(DetectionMetadata.class.getCanonicalName());
+    protected static final Logger LOG = LogManager.getLogger(ScriptingBase.LOGGING_NAME);
 
     private static final Map<String, Class<? extends DetectionMetadata>> detectionMetadataMap = Map.of(
-            PersonDetection.TYPE, PersonMetadata.class
+            PersonDetection.TYPE, PersonMetadata.class,
+            ObjectDetection.TYPE, ObjectMetadata.class,
+            MD5Detection.TYPE, MD5Metadata.class,
+            TextDetection.TYPE, TextMetadata.class
     );
 
     @Getter
