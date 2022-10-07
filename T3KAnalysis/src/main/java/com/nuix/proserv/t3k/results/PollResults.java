@@ -2,75 +2,38 @@ package com.nuix.proserv.t3k.results;
 
 import lombok.Getter;
 
-import java.util.Map;
-
 public class PollResults {
-    public static final String ID = "id";
-    public static final String FILEPATH = "filepath";
-    public static final String FINISHED = "finished";
-    public static final String PENDING = "pending";
-    public static final String ERROR = "error";
-    public static final String RESULT_TYPE = "result_type";
-    public static final String BROKEN_MEDIA = "BROKEN_MEDIA";
-    public static final String ID_NOT_FOUND = "ID_NOT_FOUND";
-    public static final String FILE_NOT_FOUND = "FILE_NOT_FOUND";
-    public static final String VALID_MEDIA = "VALID_MEDIA_OBJECT";
+    private static final long serialVersionUID = 1L;
 
     @Getter
-    private final long id;
+    private long id;
     @Getter
-    private final String file;
+    private String file_path;
     @Getter
-    private final String type;
+    private String result_type;
     @Getter
-    private final boolean finished;
+    private boolean finished;
     @Getter
-    private final boolean pending;
+    private boolean pending;
     @Getter
-    private final boolean error;
+    private boolean error;
     @Getter
-    private final boolean brokenMedia;
+    private boolean BROKEN_MEDIA;
     @Getter
-    private final boolean idNotFound;
+    private boolean ID_NOT_FOUND;
     @Getter
-    private final boolean fileNotFound;
+    private boolean FILE_NOT_FOUND;
     @Getter
-    private final boolean validMedia;
+    private boolean VALID_MEDIA_OBJECT;
 
-    private PollResults(long id, String file, String type, boolean finished, boolean pending, boolean error, boolean broken, boolean noId, boolean noFile, boolean valid) {
-        this.id = id;
-        this.file = file;
-        this.finished = finished;
-        this.pending = pending;
-        this.error = error;
-        this.type = type;
-        this.brokenMedia = broken;
-        this.idNotFound = noId;
-        this.fileNotFound = noFile;
-        this.validMedia = valid;
-    }
+    protected PollResults() {}
 
     public String toString() {
-        return file + " (ID " + id + ") of Type " + type +
-                ":: Finished=" + finished + " [Valid: " + validMedia + "]" +
+        return file_path + " (ID " + id + ") of Type " + result_type +
+                ":: Finished=" + finished + " [Valid: " + VALID_MEDIA_OBJECT + "]" +
                 " Pending=" + pending +
-                " Error=" + error + " [Broken=" + brokenMedia +
-                ", No ID=" + idNotFound +
-                ", No File=" + fileNotFound + "]";
-    }
-
-    public static PollResults parseResults(Map<String, Object> body) {
-        long id = ((Number)body.get(ID)).longValue();
-        String path = (String)body.get(FILEPATH);
-        String type = (String)body.get(RESULT_TYPE);
-        boolean finished = (boolean) body.get(FINISHED);
-        boolean pending = !finished && (boolean) body.get(PENDING);
-        boolean error = (boolean) body.get(ERROR);
-        boolean valid = finished && body.containsKey(VALID_MEDIA);
-        boolean broken = error && body.containsKey(BROKEN_MEDIA);
-        boolean noId = error && body.containsKey(ID_NOT_FOUND);
-        boolean noFile = error && body.containsKey(FILE_NOT_FOUND);
-
-        return new PollResults(id, path, type, finished, pending, error, broken, noId, noFile, valid);
+                " Error=" + error + " [Broken=" + BROKEN_MEDIA +
+                ", No ID=" + ID_NOT_FOUND +
+                ", No File=" + FILE_NOT_FOUND + "]";
     }
 }

@@ -1,11 +1,37 @@
 package com.nuix.proserv.t3k.detections;
 
+import com.google.gson.*;
 import lombok.Getter;
+
+import java.io.Serializable;
+import java.lang.reflect.Type;
 
 /**
  * Provides details about a match to a TextDetection.
  */
-public class TextMatch {
+public class TextMatch implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public static class Deserializer implements JsonDeserializer<TextMatch> {
+
+        @Override
+        public TextMatch deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+            JsonArray jsonArray = json.getAsJsonArray();
+
+            TextMatch match = new TextMatch();
+            match.matchedText = jsonArray.get(0).getAsString();
+            match.startPage = jsonArray.get(1).getAsInt();
+            match.startCharacter = jsonArray.get(2).getAsInt();
+            match.startCharacterPosition = jsonArray.get(3).getAsDouble();
+            match.endPage = jsonArray.get(4).getAsInt();
+            match.endCharacter = jsonArray.get(5).getAsInt();
+            match.endCharacterPosition = jsonArray.get(6).getAsDouble();
+
+            return match;
+        }
+    }
+
     @Getter
     private String matchedText;
 
@@ -33,18 +59,5 @@ public class TextMatch {
     public String toString() {
         return String.format("%s [%d/%d -> %d/%d]",
                 matchedText, startPage, startCharacter, endPage, endCharacter);
-    }
-
-    public static TextMatch parseTextMatch(Object[] matchData) {
-        TextMatch match = new TextMatch();
-        match.matchedText = (String)matchData[0];
-        match.startPage = (int)matchData[1];
-        match.startCharacter = (int)matchData[2];
-        match.startCharacterPosition = (double)matchData[3];
-        match.endPage = (int)matchData[4];
-        match.endCharacter = (int)matchData[5];
-        match.endCharacterPosition = (double)matchData[6];
-
-        return match;
     }
 }

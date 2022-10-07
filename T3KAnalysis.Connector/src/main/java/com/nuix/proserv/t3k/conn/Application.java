@@ -8,6 +8,8 @@ import com.nuix.proserv.t3k.detections.DetectionWithData;
 import com.nuix.proserv.t3k.results.AnalysisResult;
 import lombok.Getter;
 import lombok.Setter;
+import nuix.CustomMetadataMap;
+import nuix.Item;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,10 +17,13 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 public class Application {
 
@@ -171,12 +176,33 @@ public class Application {
         }
     }
 
-    public static void main(String[] args) {
-
+    public static void main(String[] args)
+    {
         //File dataPath = new File(System.getenv("ProgramData"));
         Path dataPath = Path.of(System.getenv("ProgramData"), "Nuix", "Nuix T3K Analysis");
         File configFile = new File(dataPath.toFile(), "t3k_settings.json");
         LOG.debug("Program Data: {} [{}]", configFile.toString(), configFile.exists());
+
+        FileReader reader = null;
+        try {
+            reader = new FileReader(configFile);
+        } catch (FileNotFoundException e) {
+            LOG.error(e);
+        }
+
+        Configuration config = null;
+        if (reader != null)
+        {
+            config = new Gson().fromJson(reader, Configuration.class);
+        } else {
+            config = new Configuration();
+        }
+
+        String sourcePath = config.getNuix_output_path();
+        File sourceDir = new File(sourcePath);
+        File[] sourceFiles = sourceDir.listFiles();
+        if (null == sourceFiles) sourceFiles = new File[0];
+        java.util.List<String> toAnalyze = Arrays.stream(sourceFiles).map(File::getAbsolutePath).collect(Collectors.toList());
 
         BatchListener batcher = new BatchListener() {
             @Override
@@ -213,7 +239,7 @@ public class Application {
 
             @Override
             public void analysisError(String message) {
-
+                LOG.error("Analysis Error: {}", message);
             }
         };
 
@@ -221,21 +247,39 @@ public class Application {
             app.setBatchListener(batcher);
             app.setAnalysisListener(analyzer);
 
-            String file = "C:\\Projects\\ProServ\\T3K\\Data\\processing\\71f218c4-9bdd-4701-8576-634eaccc1a86.jpg";
-            List<String> toAnalyze = List.of(file);
+            //String file = "C:\\Projects\\ProServ\\T3K\\Data\\processing\\71f218c4-9bdd-4701-8576-634eaccc1a86.jpg";
+            //List<String> toAnalyze = List.of(file);
             BlockingQueue<AnalysisResult> completedAnalysis = new LinkedBlockingQueue<>();
 
             app.analyze(toAnalyze, completedAnalysis);
 
-            AnalysisResult result = null;
+            processResults(completedAnalysis);
+
+    }
+
+    private static void processResults(BlockingQueue<AnalysisResult> results)
+    {
+
+        while(true) {
+            AnalysisResult currentResult = null;
+
             try {
-                result = completedAnalysis.take();
+                currentResult = results.take();
             } catch (InterruptedException e) {
-                LOG.error("Taking the results from analysis was interrupted");
+                LOG.info("Getting the next item from the queue was interrupted.  Trying again.");
+                continue;
             }
 
-            LOG.info("Results: {}", result);
+            if (Application.END_OF_ANALYSIS.equals(currentResult)) {
+                LOG.trace("Came to the end of the queue, exiting work.");
+                break;
+            }
 
+            String filePath = currentResult.getFile();
+            String fileName = Path.of(filePath).getFileName().toString();
+            LOG.info("{} [{}]: Found {} things.", currentResult.getId(), fileName, currentResult.getDetectionCount());
+            currentResult.forEachDetection(LOG::info);
+        }
     }
 
     public static final AnalysisResult END_OF_ANALYSIS = new AnalysisResult() {

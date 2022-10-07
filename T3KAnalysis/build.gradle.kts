@@ -34,7 +34,8 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.24")
 
     // If using mavenLocal use this
-    implementation("com.nuix.proserv:JavaRESTClient:1.0.1-SNAPSHOT")
+    implementation("com.nuix.proserv:JavaRESTClient:1.0.3-SNAPSHOT")
+    implementation("com.google.code.gson:gson:2.8.9")
 
     // If using a file in a folder use this
     //implementation(":JavaRESTClient:1.0.1-SNAPSHOT")
@@ -47,10 +48,10 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
 
-/*
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
-*/
+
+    //testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    //testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+
 }
 
 publishing {
@@ -67,4 +68,9 @@ publishing {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+tasks.test {
+    useJUnit()
+    maxHeapSize = "1G"
 }

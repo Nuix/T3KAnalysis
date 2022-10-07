@@ -7,7 +7,9 @@ import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
-public class ObjectDetection extends Detection implements DetectionWithData, DetectionWithLocation, DetectionWithScore {
+public class ObjectDetection extends Detection {
+    private static final long serialVersionUID = 1L;
+
     public static final String TYPE = "object";
     public static final String CLASSIFICATION = "class_name";
 
@@ -15,46 +17,28 @@ public class ObjectDetection extends Detection implements DetectionWithData, Det
     private DetectionData<?> data;
 
     @Getter
-    private Rectangle2D.Double box;
+    private double[] box = new double[4];
 
     @Getter
     private double score;
 
     @Getter
-    private String classification;
+    private String class_name;
 
     private ObjectDetection() {}
 
     @Override
     public String toString() {
         return super.toString() +
-                " Classification: " + classification +
+                " Classification: " + class_name +
                 " Score: " + String.valueOf(score) +
-                " Location: " + String.valueOf(box.x) + "x" + String.valueOf(box.y) +
-                          " - " + String.valueOf(box.width) + "x" + String.valueOf(box.height) +
-                " Data: " + data.toString();
+                " Location: " + String.valueOf(box[0]) + "x" + String.valueOf(box[1]) +
+                          " - " + String.valueOf(box[2]) + "x" + String.valueOf(box[3]) +
+                " Data: " + ((null == data) ? "none" : data.toString());
     }
 
 
     public static boolean isObjectDetection(Map<String, Object> detectionData) {
         return TYPE.equals(detectionData.get(Detection.TYPE));
-    }
-
-    public static ObjectDetection parseDetection(Map<String, Object> detectionData) {
-        if (isObjectDetection(detectionData)) {
-
-            ObjectDetection detection = new ObjectDetection();
-            detection.classification = (String)detectionData.get(CLASSIFICATION);
-            detection.score = (double) detectionData.get(SCORE);
-
-            double[] boxParams = (double[]) detectionData.get(BOX);
-            detection.box = new Rectangle2D.Double(boxParams[0], boxParams[1], boxParams[2], boxParams[3]);
-
-            Detection.fillSharedValues(detection, detectionData);
-
-            return detection;
-        } else {
-            return null;
-        }
     }
 }

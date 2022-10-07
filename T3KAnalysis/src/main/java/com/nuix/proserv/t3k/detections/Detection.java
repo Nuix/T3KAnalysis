@@ -5,6 +5,7 @@ import lombok.Getter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -18,7 +19,9 @@ import java.util.Map;
  * Each type of detection will have its own data and so the end consumer will need to know how to use each
  * one.
  */
-public abstract class Detection {
+public abstract class Detection implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     protected static final Logger LOG = LogManager.getLogger(T3KApi.LOGGER_NAME);
     
     public static final String TYPE = "type";

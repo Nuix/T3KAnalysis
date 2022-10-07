@@ -1,8 +1,12 @@
 package com.nuix.proserv.t3k;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.nuix.proserv.restclient.RestClient;
+import com.nuix.proserv.restclient.SimpleResponse;
 import com.nuix.proserv.t3k.results.AnalysisResult;
 import com.nuix.proserv.t3k.results.PollResults;
+import com.nuix.proserv.t3k.results.UploadResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -69,6 +73,9 @@ public class T3KApi {
 
     public long upload(long sourceId, String serverPath) {
         LOG.trace("Uploading #{} at {}", sourceId, serverPath);
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(UploadResult.class, new UploadResult.Deserializer());
+        Gson gson = builder.create();
 
         // Using arrays to hold the mutable values as the outer scope to lambdas is considered final.
         long[] sourceIdHolder = { sourceId };
@@ -79,10 +86,10 @@ public class T3KApi {
             Map<String, Object> uploadBody = Map.of(String.valueOf(sourceIdHolder[0]), serverPath);
             LOG.debug("Upload Body: {}", uploadBody);
 
-            Map<String, Object> uploadRequestResults = this.client.post(Endpoint.UPLOAD.get(), uploadBody);
+            SimpleResponse uploadRequestResults = this.client.post(Endpoint.UPLOAD.get(), uploadBody);
             LOG.debug("Upload Results: {}", uploadRequestResults);
 
-            int resultCode = (Integer)uploadRequestResults.get("code");
+            int resultCode = (Integer)uploadRequestResults.getCode();
 
             switch (resultCode) {
                 case 400:
@@ -100,30 +107,28 @@ public class T3KApi {
                     return false;
                 case 200:
                     // Success, finish up
-                    Map<String, Object> resultsBody = (Map<String, Object>)uploadRequestResults.get("body");
-                    if (resultsBody.isEmpty()) {
-                        resultIdHolder[0] = 0;
-                    } else {
-                        long resultId = Long.parseLong(resultsBody.keySet().iterator().next());
-                        resultIdHolder[0] = resultId;
-                    }
+                    String resultsBody = uploadRequestResults.getBodyAsString();
+                    UploadResult result = gson.fromJson(resultsBody, UploadResult.class);
+                    result.forEachId(id -> {
+                        if (-1L == resultIdHolder[0]) resultIdHolder[0] = id;
+                    });
                     return true;
                 default:
                     if (resultCode >= 500 && resultCode <= 599) {
                         // Server error.  Try again.
                         LOG.info("Server Error: [{}] {}: {}",
-                                uploadRequestResults.get("message"),
+                                uploadRequestResults.getMessage(),
                                 resultCode,
-                                uploadRequestResults.get("body")
+                                uploadRequestResults.getBodyAsString()
                         );
 
                         return false;
                     } else {
                         // Unexpected value.  Assume it is bad and retry
                         LOG.info("Unexpected return value.  Trying again.  [{}] {}: {}",
-                           uploadRequestResults.get("message"),
+                           uploadRequestResults.getMessage(),
                            resultCode,
-                           uploadRequestResults.get("body")
+                           uploadRequestResults.getBodyAsString()
                         );
 
                         return  false;
@@ -136,6 +141,9 @@ public class T3KApi {
 
     public Map<Long, Long> batchUpload(Map<Long, String> itemsToUpload) {
         LOG.trace("Uploading Batch: {}", itemsToUpload);
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(UploadResult.class, new UploadResult.Deserializer());
+        Gson gson = builder.create();
 
         Map<Long, Long> sourceIdToResultIdMap = new HashMap<>();
 
@@ -147,10 +155,10 @@ public class T3KApi {
         }
 
         doWithRetries(() -> {
-            Map<String, Object> uploadRequestResults = this.client.post( Endpoint.UPLOAD.get(), uploadBody );
+            SimpleResponse uploadRequestResults = this.client.post( Endpoint.UPLOAD.get(), uploadBody );
             LOG.debug("Batch Upload Response: {}", uploadRequestResults);
 
-            int returnCode = (int)uploadRequestResults.get("code");
+            int returnCode = (int)uploadRequestResults.getCode();
             switch (returnCode) {
                 case 434:
                     // Invalid source id.  No easy fix for this in batch mode so throw an error.
@@ -167,14 +175,17 @@ public class T3KApi {
                     ));
                 case 200:
                     // Success.  Map results to sources
-                    Map<String, Object> resultsBody = (Map<String, Object>)uploadRequestResults.get("body");
-                    resultsBody.forEach((resultKey, filePath ) -> {
-                        long sourceId = itemsToUpload.entrySet().stream()
-                                .filter(entry -> filePath.equals(entry.getValue()))
-                                .map(Map.Entry::getKey).findFirst().get();
-                        long resultId = Long.parseLong(resultKey);
+                    String resultsBody = uploadRequestResults.getBodyAsString();
+                    UploadResult results = gson.fromJson(resultsBody, UploadResult.class);
+                    results.forEachId(resultKey -> {
+                        String resultPath = results.get(resultKey);
+                        if(null != resultPath) {
+                            long sourceId = itemsToUpload.entrySet().stream()
+                                    .filter(entry -> resultPath.equals(entry.getValue()))
+                                    .map(Map.Entry::getKey).findFirst().get();
 
-                        sourceIdToResultIdMap.put(sourceId, resultId);
+                            sourceIdToResultIdMap.put(sourceId, resultKey);
+                        }
                     });
                     return true;
                 default:
@@ -186,21 +197,22 @@ public class T3KApi {
         return sourceIdToResultIdMap;
     }
 
-    public Map<String, Object> poll(long itemId) {
+    public PollResults poll(long itemId) {
         LOG.trace("Polling for {}", itemId);
+        Gson gson = new Gson();
 
         // Using a lambda function for the retries.  The variables in the enclosing scope are final for the lambda
-        // so using a map to have a modifiable container.  Results will be keyed to "value"
-        Map<String, Map<String, Object>> pollResultsHolder = new HashMap<>();
+        // so using an array to hold the reference to the results
+        PollResults[] pollResultsHolder = new PollResults[] { null };
 
         String pollEndpoint = Endpoint.POLL.get(String.valueOf(itemId));
         LOG.debug("Polling Endpoint: {}", pollEndpoint);
 
         doWithRetries(() -> {
-            Map<String, Object> pollResponse = client.get(pollEndpoint);
+            SimpleResponse pollResponse = client.get(pollEndpoint);
             LOG.debug("Poll Response: {}", pollResponse);
 
-            int pollResponseCode = (Integer)pollResponse.get("code");
+            int pollResponseCode = (Integer)pollResponse.getCode();
             switch(pollResponseCode) {
                 case 433:
                     // The file was broken.  Treat it as a successful poll but log an error.
@@ -211,7 +223,8 @@ public class T3KApi {
                     // Intentionally falling into the 200 result.
                 case 200:
                     // Poll successful.  Work still may not be done, so client needs to check
-                    pollResultsHolder.put("value", (Map<String, Object>)pollResponse.get("body"));
+                    PollResults pollResults = gson.fromJson(pollResponse.getBodyAsString(), PollResults.class);
+                    pollResultsHolder[0] = pollResults;
                     return true;
                 case 400:
                     // The request was malformed.
@@ -229,26 +242,26 @@ public class T3KApi {
         });
 
 
-        return pollResultsHolder.get("value");
+        return pollResultsHolder[0];
     }
 
-    private Boolean handleServerErrors(Map<String, Object> requestResponse) {
-        int responseCode = (int) requestResponse.get("code");
+    private Boolean handleServerErrors(SimpleResponse requestResponse) {
+        int responseCode = (int) requestResponse.getCode();
         if (500 <= responseCode && 599 >= responseCode) {
             // Server error.  Try again.
             LOG.info("Server Error: [{}] {}: {}",
-                    requestResponse.get("message"),
+                    requestResponse.getMessage(),
                     responseCode,
-                    requestResponse.get("body")
+                    requestResponse.getBodyAsString()
             );
 
         } else {
             // Unexpected code.  Expect it to be bad and retry
             LOG.info(String.format(
                     "Unexpected return value.  Trying again.  [%s] %d: %s",
-                    requestResponse.get("message"),
+                    requestResponse.getMessage(),
                     responseCode,
-                    requestResponse.get("body")
+                    requestResponse.getBodyAsString()
             ));
 
         }
@@ -311,10 +324,9 @@ public class T3KApi {
             long pollForId = item.getId();
             LOG.debug("Polling for {}", pollForId);
 
-            Map<String, Object> pollBody = poll(pollForId);
-            LOG.debug("Poll Results: {}={}", pollForId, pollBody);
+            PollResults results = poll(pollForId);
+            LOG.debug("Poll Results: {}={}", pollForId, results);
 
-            PollResults results = PollResults.parseResults(pollBody);
             LOG.debug(results);
 
             if(results.isFinished()) {
@@ -347,9 +359,7 @@ public class T3KApi {
         PollResults[] resultsHolder = { null };
 
         doWithRetries(() -> {
-            Map<String, Object> pollBody = poll(id);
-
-            PollResults results = PollResults.parseResults(pollBody);
+            PollResults results = poll(id);
 
             resultsHolder[0] = results;
 
@@ -369,17 +379,17 @@ public class T3KApi {
 
         doWithRetries(() -> {
             String endpoint = Endpoint.RESULT.get(String.valueOf(id));
-            Map<String, Object> resultResponse = client.get(Endpoint.RESULT.get(String.valueOf(id)));
+            SimpleResponse resultResponse = client.get(Endpoint.RESULT.get(String.valueOf(id)));
 
-            int responseCode = (int)resultResponse.get("code");
-            String responseMessage = (String)resultResponse.get("message");
-            Object responseBody = resultResponse.get("body");
+            int responseCode = resultResponse.getCode();
+            String responseMessage = resultResponse.getMessage();
+            String responseBody = resultResponse.getBodyAsString();
             LOG.debug("Results Response: {}, {}", responseCode, responseBody);
 
             switch(responseCode) {
                 case 200:
                     // Success
-                    AnalysisResult result = AnalysisResult.parseResult((Map<String, Object>)responseBody);
+                    AnalysisResult result = AnalysisResult.parseResult(responseBody);
                     analysisResults[0] = result;
                     return true;
                 case 400:

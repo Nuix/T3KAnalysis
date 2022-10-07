@@ -1,13 +1,17 @@
 package com.nuix.proserv.t3k.detections;
 
+import com.google.gson.*;
 import com.nuix.proserv.t3k.T3KApi;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * This is a factory for Detection object.  Use the {@link #getDetection(Map)} method to get a Detection
@@ -22,7 +26,7 @@ import java.util.Map;
  * key/value pairs.  It is conceivable to reach this limit in which case the initialization of the
  * map will need to change.
  */
-public class DetectionTypeMap {
+public class DetectionTypeMap implements JsonDeserializer<Detection> {
     private static final Logger LOG = LogManager.getLogger(T3KApi.LOGGER_NAME);
 
     private static final Map<String, Class<? extends Detection>> DETECTION_TYPE_MAP = Collections.unmodifiableMap(
@@ -31,6 +35,8 @@ public class DetectionTypeMap {
                     MD5Detection.TYPE, MD5Detection.class,
                     TextDetection.TYPE, TextDetection.class)
     );
+
+
 
     /**
      * Create a new instance of a Detection using the provided detection data.  The type of the detection is
@@ -44,17 +50,64 @@ public class DetectionTypeMap {
      * @return A Detection instance whose type is specific to the data provided.
      */
     public static Detection getDetection(Map<String, Object> detectionData) {
+        LOG.debug("Detection Map: {}", DETECTION_TYPE_MAP);
+
         String type = (String) detectionData.get(Detection.TYPE);
+        LOG.debug("Type: {}", type);
 
         Class<? extends Detection> detectionClass = DETECTION_TYPE_MAP.getOrDefault(type, UnknownDetection.class);
+        LOG.debug("Class: {}", detectionClass);
 
         try {
+            Method[] methods = detectionClass.getMethods();
+            Arrays.stream(methods).forEach(method -> LOG.debug("Found: {}", method));
+
             Method parseMethod = detectionClass.getMethod("parseDetection", Map.class);
+            LOG.debug("Debug Method: {}", parseMethod);
+
+            Object detection = parseMethod.invoke(null, detectionData);
+            LOG.debug("Detection Parsed: {}", detection);
             return (Detection)parseMethod.invoke(null, detectionData);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            LOG.error("{} caused by {}: {}", e.getMessage(), e.getCause().getMessage(), Arrays.stream(e.getCause().getStackTrace()).map(String::valueOf));
             LOG.warn("The type returned for the detection \"{}\" does not have an accessible parseDetection method.  Proving an UnknownDetection instead.", type);
             return UnknownDetection.parseDetection(detectionData);
         }
+
+    }
+
+    private static UnknownDetection jsonToUnknownDetection(JsonObject jsonObject) {
+        return UnknownDetection.parseDetection(jsonObject.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+    }
+
+    @Override
+    public Detection deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        JsonObject jsonObject = json.getAsJsonObject();
+        JsonElement typeElement = jsonObject.get("type");
+        LOG.debug("Read Type: {}", typeElement);
+
+        if (null == typeElement) {
+            LOG.error("Detection type could not be read from json.  Using a generic detection type. {}", json.toString());
+            return jsonToUnknownDetection(jsonObject);
+        }
+
+        String type = typeElement.getAsString();
+        Class<? extends Detection> detectionImplementation = DETECTION_TYPE_MAP.getOrDefault(type, UnknownDetection.class);
+        if(UnknownDetection.class.equals(detectionImplementation)) {
+            LOG.error("Detection type is not an expected type {}.  Using a generic detection type.", type);
+            return jsonToUnknownDetection(jsonObject);
+        }
+
+        if(MD5Detection.class.equals(detectionImplementation)) {
+            JsonElement hit = jsonObject.get(MD5Detection.HIT);
+            return context.deserialize(hit, detectionImplementation);
+        }
+
+        if (TextDetection.class.equals(detectionImplementation)) {
+            return new TextDetection.Deserializer().deserialize(json, typeOfT, context);
+        }
+
+        return context.deserialize(json, detectionImplementation);
 
     }
 }

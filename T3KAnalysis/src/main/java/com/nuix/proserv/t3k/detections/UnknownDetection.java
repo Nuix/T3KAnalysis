@@ -2,6 +2,7 @@ package com.nuix.proserv.t3k.detections;
 
 import lombok.Getter;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -11,6 +12,8 @@ import java.util.function.BiConsumer;
  * {@link #forEachDetail(BiConsumer)} method.
  */
 public class UnknownDetection extends Detection {
+    private static final long serialVersionUID = 1L;
+
     private Map<String, Object> details;
 
     private UnknownDetection() {}
@@ -36,9 +39,23 @@ public class UnknownDetection extends Detection {
      * @return An instance of UnknownDetection.
      */
     public static UnknownDetection parseDetection(Map<String, Object> detectionData) {
+
         UnknownDetection detection = new UnknownDetection();
 
-        detection.details = Map.copyOf(detectionData);
+        // Reduce the source data to any entries without null values and store them in an immutable copy
+        // The null removal is a pre-requisite for the immutable copy
+        detection.details = Map.copyOf(detectionData.entrySet().stream().reduce(new HashMap<String, Object>(),
+                (content, entry) -> {
+                    // Only accumulate if there are no nulls in the entry
+                    if (entry.getKey() != null && entry.getValue() != null) {
+                        content.put(entry.getKey(), entry.getValue());
+                    }
+                    return content;
+                }, (map1, map2) -> {
+                    // Then combine into a single map
+                    map1.putAll(map2);
+                    return map1;
+                }));
 
         return detection;
     }
