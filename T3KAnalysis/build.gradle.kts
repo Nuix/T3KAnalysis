@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.nuix.proserv"
-version = "1.0-SNAPSHOT"
+version = "1.0.5-SNAPSHOT"
 
 repositories {
     maven {
@@ -47,7 +47,6 @@ dependencies {
     //implementation("com.googlecode.json-simple:json-simple:1.1.1")
 
     testImplementation("junit:junit:4.13.2")
-
 
     //testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
     //testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")

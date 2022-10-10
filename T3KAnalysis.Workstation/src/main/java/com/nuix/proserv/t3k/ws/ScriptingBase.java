@@ -3,6 +3,7 @@ package com.nuix.proserv.t3k.ws;
 import com.nuix.proserv.t3k.conn.AnalysisListener;
 import com.nuix.proserv.t3k.conn.Application;
 import com.nuix.proserv.t3k.conn.BatchListener;
+import com.nuix.proserv.t3k.conn.ResultsListener;
 import com.nuix.proserv.t3k.results.AnalysisResult;
 import com.nuix.proserv.t3k.ws.metadata.AnalysisMetadata;
 import lombok.Getter;
@@ -144,7 +145,7 @@ public class ScriptingBase {
                 break;
             }
 
-            String filePath = currentResult.getFile();
+            String filePath = currentResult.getMetadata().getFile_path();
             String fileName = Path.of(filePath).getFileName().toString();
             String guid = fileName.split("\\.")[0];
 
@@ -164,9 +165,12 @@ public class ScriptingBase {
         }
     }
 
-    public void analyze(List<String> filesToAnalyze, BlockingQueue<AnalysisResult> completedResults, StatusListener statusListener, ProgressListener progressListener) {
+    public void analyze(List<String> filesToAnalyze, BlockingQueue<AnalysisResult> completedResults,
+                        AnalysisListener analysisListener,
+                        BatchListener batchListener,
+                        ResultsListener resultsListener) {
 
-        AnalysisListener analysisListener = new AnalysisListener() {
+        /*AnalysisListener analysisListener = new AnalysisListener() {
             @Override
             public void analysisStarted(String message) {
                 statusListener.updateStatus(message);
@@ -203,10 +207,11 @@ public class ScriptingBase {
             public void batchCompleted(int batch, int batchCount, String message) {
                 progressListener.updateProgress(batch, batchCount, "DONE: " + message);
             }
-        };
+        };*/
 
         app.setAnalysisListener(analysisListener);
         app.setBatchListener(batchListener);
+        app.setResultsListener(resultsListener);
 
         app.analyze(filesToAnalyze, completedResults);
 

@@ -2,12 +2,9 @@ package com.nuix.proserv.t3k.conn;
 
 import com.nuix.proserv.t3k.T3KApi;
 import com.nuix.proserv.t3k.conn.config.Configuration;
-import com.nuix.proserv.t3k.detections.DetectionWithData;
 import com.nuix.proserv.t3k.results.AnalysisResult;
 import com.nuix.proserv.t3k.results.PollResults;
 import org.apache.commons.collections4.ListUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,8 +15,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class BatchAnalyzer extends Analyzer<List<String>> {
 
-    protected BatchAnalyzer(T3KApi api, String configPath, Configuration configuration, BatchListener listener) {
-        super(api, configPath, configuration, null, listener);
+    protected BatchAnalyzer(T3KApi api, String configPath, Configuration configuration, BatchListener batchListener, ResultsListener resultsListener) {
+        super(api, configPath, configuration, null, batchListener, resultsListener);
     }
 
     public List<List<String>> buildBatches(List<String> items) {
@@ -105,7 +102,7 @@ public class BatchAnalyzer extends Analyzer<List<String>> {
                 currentItemIndex++;
 
                 Long itemId = pollResults.getId();
-                String itemPath = pollResults.getFile();
+                String itemPath = pollResults.getFilepath();
                 String fileName = Path.of(itemPath).getFileName().toString();
 
                 if(pollResults.isError()) {
@@ -116,9 +113,11 @@ public class BatchAnalyzer extends Analyzer<List<String>> {
 
                 AnalysisResult analysisResult = getApi().getResults(itemId);
                 LOG.debug("[{}] {} Produced: {}", itemId, fileName, analysisResult);
+                updateResultAnalyzed();
 
                 if(null == analysisResult) {
                     LOG.error("[{}] {} Error getting results.", itemId, fileName);
+                    updateResultError();
                     continue;
                 }
 
@@ -132,6 +131,12 @@ public class BatchAnalyzer extends Analyzer<List<String>> {
                         "[%d] %s Processed.",
                         itemId, fileName
                 ));
+
+                if (0 == analysisResult.getDetectionCount()) {
+                    updateResultNoMatch();
+                } else {
+                    updateResultDetections(analysisResult.getDetectionCount());
+                }
 
             } catch (InterruptedException e) {
                 LOG.warn("Taking an item from the queue of items to collect was interrupted.  For now, just re-trying.");
@@ -160,14 +165,5 @@ public class BatchAnalyzer extends Analyzer<List<String>> {
         collectResults(itemCount, completedItems, completedResults);
     }
 
-    private static final PollResults END_OF_QUEUE = PollResults.parseResults(Map.of(
-            PollResults.ID, -1,
-            PollResults.ERROR, false,
-            PollResults.FINISHED, true,
-            PollResults.PENDING, false,
-            PollResults.FILEPATH, ""
-    ));
-
-
-
+    private static final PollResults END_OF_QUEUE = new PollResults() {};
 }

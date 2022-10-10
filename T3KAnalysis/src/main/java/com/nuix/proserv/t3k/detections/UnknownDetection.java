@@ -16,7 +16,7 @@ public class UnknownDetection extends Detection {
 
     private Map<String, Object> details;
 
-    private UnknownDetection() {}
+    protected UnknownDetection() {}
 
     public int getDetailCount() {
         return details.size();

@@ -17,7 +17,7 @@ public class ObjectMetadata  extends DetectionMetadata implements MetadataWithSc
     @Override
     public String getTypeTemplate(Detection detection) {
         if (detection instanceof ObjectDetection) {
-            return String.format(T3K_CLASSIFICATION, "%d", ((ObjectDetection)detection).getClassification());
+            return String.format(T3K_CLASSIFICATION, "%d", ((ObjectDetection)detection).getClass_name());
         } else {
             LOG.warn("The type of the detection is not an Object as expected, returning a generic template.");
             return String.format(T3K_CLASSIFICATION, "%d", detection.getType());

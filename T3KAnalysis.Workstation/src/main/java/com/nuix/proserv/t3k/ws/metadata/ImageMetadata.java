@@ -9,7 +9,7 @@ public class ImageMetadata extends AnalysisMetadata {
 
     private int detectionCounter = 0;
 
-    protected ImageMetadata(CustomMetadataMap metadataMap, AnalysisResult analysisResult) {
+    public ImageMetadata(CustomMetadataMap metadataMap, AnalysisResult analysisResult) {
         super(metadataMap, analysisResult);
     }
 

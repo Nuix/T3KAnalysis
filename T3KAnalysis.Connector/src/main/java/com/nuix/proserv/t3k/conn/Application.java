@@ -4,12 +4,10 @@ import com.google.gson.Gson;
 import com.nuix.proserv.t3k.T3KApi;
 import com.nuix.proserv.t3k.conn.config.Configuration;
 
-import com.nuix.proserv.t3k.detections.DetectionWithData;
 import com.nuix.proserv.t3k.results.AnalysisResult;
+import com.nuix.proserv.t3k.results.ResultMetadata;
 import lombok.Getter;
 import lombok.Setter;
-import nuix.CustomMetadataMap;
-import nuix.Item;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +42,9 @@ public class Application {
 
     @Setter
     private AnalysisListener analysisListener;
+
+    @Setter
+    private ResultsListener resultsListener;
 
     public Application(String pathToConfig) {
         File configFile = new File(pathToConfig);
@@ -101,7 +101,7 @@ public class Application {
         if(1 == itemsToAnalyze.size()) {
 
             // single
-            SingleItemAnalyzer analyzer = new SingleItemAnalyzer(api, configDirectory, config, analysisListener);
+            SingleItemAnalyzer analyzer = new SingleItemAnalyzer(api, configDirectory, config, analysisListener, resultsListener);
 
             BlockingQueue<AnalysisResult> completedItems = new LinkedBlockingQueue<>();
             analyzer.analyze(itemsToAnalyze.get(0), completedItems);
@@ -125,15 +125,10 @@ public class Application {
                 LOG.error("Putting completed results into the result queue was interrupted.");
             }
 
-            try {
-                completedResults.put(END_OF_ANALYSIS);
-            } catch (InterruptedException e) {
-                LOG.error("Signalling end of analysis (after completed results) was interrupted.");
-            }
         } else if (itemsToAnalyze.size() > 1) {
             LOG.info("Processing batches of items.");
 
-            BatchAnalyzer analyzer = new BatchAnalyzer(api, configDirectory, config, batchListener);
+            BatchAnalyzer analyzer = new BatchAnalyzer(api, configDirectory, config, batchListener, resultsListener);
 
             List<List<String>> batches = analyzer.buildBatches(itemsToAnalyze);
             final int batchCount = batches.size();
@@ -153,27 +148,24 @@ public class Application {
 
                 LOG.info("Finished batch {}/{}", currentBatchIndex, batchCount);
                 if(null != batchListener) {
-                    batchListener.batchStarted(currentBatchIndex, batchCount, String.format(
+                    batchListener.batchCompleted(currentBatchIndex, batchCount, String.format(
                             "Completed Batch %d / %d", currentBatchIndex, batchCount
                     ));
-                }
-
-                try {
-                    completedResults.put(END_OF_ANALYSIS);
-                } catch (InterruptedException e) {
-                    LOG.error("Signalling end of analysis (at the end of batch analysis) was interrupted.");
                 }
             }
 
         } else {
             // Empty list, return an empty map.
             LOG.warn("The list of items to analyze is empty.");
-            try {
-                completedResults.put(END_OF_ANALYSIS);
-            } catch (InterruptedException e) {
-                LOG.error("Signalling end of analysis (caused by no items to analyze) was interrupted.");
-            }
         }
+
+        // No matter what, signal the end of analysis when done
+        try {
+            completedResults.put(END_OF_ANALYSIS);
+        } catch (InterruptedException e) {
+            LOG.error("Signalling end of analysis (after completed results) was interrupted.");
+        }
+
     }
 
     public static void main(String[] args)
@@ -275,17 +267,22 @@ public class Application {
                 break;
             }
 
-            String filePath = currentResult.getFile();
+            String filePath = currentResult.getMetadata().getFile_path();
             String fileName = Path.of(filePath).getFileName().toString();
-            LOG.info("{} [{}]: Found {} things.", currentResult.getId(), fileName, currentResult.getDetectionCount());
+            LOG.info("{} [{}]: Found {} things.", currentResult.getMetadata().getId(), fileName, currentResult.getDetectionCount());
             currentResult.forEachDetection(LOG::info);
         }
     }
 
     public static final AnalysisResult END_OF_ANALYSIS = new AnalysisResult() {
+        class EmptyMetadata extends ResultMetadata {}
+
+        final ResultMetadata metadata = new EmptyMetadata();
+
         @Override
-        protected void addDataToDetection(DetectionWithData detectionWithData, Map<String, Object> map) {
-            // Do nothing
+        public ResultMetadata getMetadata() {
+            return metadata;
         }
     };
+
 }

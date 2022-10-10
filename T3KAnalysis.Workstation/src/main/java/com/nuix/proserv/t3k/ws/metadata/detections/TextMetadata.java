@@ -56,12 +56,12 @@ public class TextMetadata extends DetectionMetadata {
         }
 
         TextDetection text = (TextDetection) detection;
-        getMetadataMap().putText(String.format(T3K_STRING, detectionIndex), text.getText());
+        getMetadataMap().putText(String.format(T3K_STRING, detectionIndex), text.getString());
         getMetadataMap().putText(String.format(T3K_LANGUAGE, detectionIndex), text.getLanguage());
         getMetadataMap().putText(String.format(T3K_DESCRIPTION, detectionIndex), text.getDescription());
         getMetadataMap().putBoolean(String.format(T3K_REGEX, detectionIndex), text.isRegex());
         getMetadataMap().putBoolean(String.format(T3K_FUZZY, detectionIndex), text.isFuzzy());
-        getMetadataMap().putFloat(String.format(T3K_MLR, detectionIndex), text.getMinimalLevenshteinRatio());
+        getMetadataMap().putFloat(String.format(T3K_MLR, detectionIndex), text.getMinimal_levenshtein_ratio());
 
         int[] matchIndex = { 0 };
         text.forEachMatch(textMatch -> {

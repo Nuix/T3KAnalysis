@@ -30,7 +30,7 @@ public class PersonMetadata extends DetectionMetadata implements MetadataWithSco
 
         PersonDetection person = (PersonDetection)detection;
         getMetadataMap().putText(String.format(T3K_GENDER, detectionIndex), person.getGender());
-        getMetadataMap().putText(String.format(T3K_AGE, detectionIndex), person.getGender());
+        getMetadataMap().putInteger(String.format(T3K_AGE, detectionIndex), person.getAge());
         getMetadataMap().putFloat(String.format(T3K_P_SCORE, detectionIndex), person.getScore());
     }
 }

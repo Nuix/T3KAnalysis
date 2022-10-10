@@ -51,7 +51,7 @@ public class TextDetection extends Detection {
 
     private transient TextMatch[] matches;
 
-    private TextDetection() {}
+    protected TextDetection() {}
 
     public int getMatchesCount() {
         return matches.length;

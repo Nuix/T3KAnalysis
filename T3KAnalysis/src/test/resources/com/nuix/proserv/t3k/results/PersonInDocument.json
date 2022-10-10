@@ -1,0 +1,70 @@
+{
+  "metadata": {
+    "id": 47,
+    "document_page_number": 1,
+    "document_page_width": 595.0,
+    "document_page_height": 841.0,
+    "document_image_number": 3,
+    "document_image_bbox": [
+      0,
+      0,
+      259,
+      194
+    ],
+    "document_image_extension": "jpeg",
+    "document_image_width": 259,
+    "document_image_height": 194,
+    "document_image_res": "96x96",
+    "md5": "4cbc0e1201aaf0cb54aabce62c860c6e",
+    "sha1": "091533f6f63900d1249d0675c40c5a2918198479",
+    "sha256": "c6fd274f8664ee79fbaaaaf9f04969292117b62bbd68e7769e8261463a546878",
+    "photoDNA": "(31, 7, 108, 1, 1, 4, 137, 0, 4, 0, 140, 0, 9, 0, 153, 0, 10, 25, 159, 0, 0, 34, 43, 0, 199, 7, 118, 70, 15, 8, 195, 51, 10, 4, 188, 20, 13, 14, 176, 7, 18, 78, 148, 16, 2, 200, 88, 7, 105, 0, 3, 155, 43, 2, 9, 255, 90, 14, 13, 238, 88, 26, 27, 170, 36, 87, 37, 32, 3, 237, 39, 64, 0, 0, 0, 3, 6, 0, 0, 14, 54, 4, 5, 82, 169, 6, 9, 134, 109, 63, 20, 45, 3, 254, 74, 6, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 5, 123, 0, 0, 38, 213, 21, 20, 49, 7, 255, 67, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 56, 0, 0, 14, 157, 15, 8, 207, 3, 166, 9, 194)",
+    "loadable": true,
+    "access_date": "2022-10-10 15:51:03.660550+00:00",
+    "modification_date": "2022-10-10 15:51:03.585549+00:00",
+    "creation_date": "2022-10-10 15:51:03.585549+00:00",
+    "file_size": 206501,
+    "file_size_string": "206.5 kB",
+    "document_analyzed_image_ids": [
+      1,
+      2,
+      3
+    ],
+    "document_total_page_number": 1,
+    "document_total_image_number": 3,
+    "document_type": ".pdf",
+    "file_path": "/CORE/resources/data/992b6116-d5eb-426f-8a5d-eaf995a0f9d2.pdf",
+    "file_kind": "Document"
+  },
+  "detections": {
+    "0": {
+      "age": 2,
+      "gender": "female",
+      "gender_string": "\u2640",
+      "score": 19.0,
+      "box": [
+        0.3303834808259587,
+        0.44204322200392926,
+        0.41002949852507375,
+        0.4950884086444008
+      ],
+      "color": [
+        245,
+        192,
+        246
+      ],
+      "type": "age/gender",
+      "info": "2 \u2640",
+      "data": [
+        [
+          "document_page_number",
+          "1"
+        ],
+        [
+          "document_image_number",
+          "1"
+        ]
+      ]
+    }
+  }
+}

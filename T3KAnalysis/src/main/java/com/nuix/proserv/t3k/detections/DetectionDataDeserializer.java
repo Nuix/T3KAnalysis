@@ -16,26 +16,8 @@ public class DetectionDataDeserializer implements JsonDeserializer<DetectionData
         JsonArray jsonArray = json.getAsJsonArray();
         JsonElement firstElement = jsonArray.get(0);
 
-        if(VideoDetectionData.VIDEO_FRAME.equals(firstElement.getAsString())) {
-            // Video data: expect an array of length 2, the first element being the word "frame"
-            if (2 != jsonArray.size()) {
-                throw new T3KApiException(String.format(
-                        "Unexpected data.  Expected to have 2 values, \"frame\", and the frame number.  Found %d values.",
-                        jsonArray.size()
-                ));
-            }
-
-            JsonElement secondElement = jsonArray.get(1);
-            if (!secondElement.isJsonPrimitive()) {
-                throw new T3KApiException(String.format(
-                        "Unexpected data.  Expected the frame to be of type int.  Found: %s",
-                        secondElement.toString()
-                ));
-            }
-
-            int frame = jsonArray.get(1).getAsInt();
-            return new VideoDetectionData(frame);
-        } else if (firstElement.isJsonArray()) {
+        if(firstElement.isJsonArray()) {
+            // Document data, presumably
             // Document data: expect an array of 2 arrays.
             if (2 != jsonArray.size()) {
                 throw new T3KApiException(String.format(
@@ -111,7 +93,34 @@ public class DetectionDataDeserializer implements JsonDeserializer<DetectionData
             }
 
             return new DocumentDetectionData(pageNumber, imageNumber);
+        } else if (firstElement.isJsonPrimitive()) {
+            // Possibly a Video
+            if(VideoDetectionData.VIDEO_FRAME.equals(firstElement.getAsString())) {
+                // Video data: expect an array of length 2, the first element being the word "frame"
+                if (2 != jsonArray.size()) {
+                    throw new T3KApiException(String.format(
+                            "Unexpected data.  Expected to have 2 values, \"frame\", and the frame number.  Found %d values.",
+                            jsonArray.size()
+                    ));
+                }
+
+                JsonElement secondElement = jsonArray.get(1);
+                if (!secondElement.isJsonPrimitive()) {
+                    throw new T3KApiException(String.format(
+                            "Unexpected data.  Expected the frame to be of type int.  Found: %s",
+                            secondElement.toString()
+                    ));
+                }
+
+                int frame = jsonArray.get(1).getAsInt();
+                return new VideoDetectionData(frame);
+            } else {
+                // Unexpected type of data
+                LOG.warn("Unexpected data type found.  Returning a generic data value");
+                return new UnknownDetectionData(json.getAsString());
+            }
         } else {
+            // Unexpected type of data
             LOG.warn("Unexpected data type found.  Returning a generic data value");
             return new UnknownDetectionData(json.getAsString());
         }

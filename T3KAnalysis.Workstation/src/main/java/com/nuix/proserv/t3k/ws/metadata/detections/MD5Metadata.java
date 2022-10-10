@@ -36,8 +36,8 @@ public class MD5Metadata extends DetectionMetadata {
         }
 
         MD5Detection hit = (MD5Detection)detection;
-        getMetadataMap().putInteger(String.format(T3K_MD5_ID, detectionIndex), hit.getHitId());
-        getMetadataMap().putText(String.format(T3K_MD5_TYPE, detectionIndex), hit.getHitType());
+        getMetadataMap().putInteger(String.format(T3K_MD5_ID, detectionIndex), hit.getId());
+        getMetadataMap().putText(String.format(T3K_MD5_TYPE, detectionIndex), hit.getType());
         getMetadataMap().putText(String.format(T3K_MD5_DESCRIPTION, detectionIndex), hit.getDescription());
         getMetadataMap().putText(String.format(T3K_MD5_HASH, detectionIndex), hit.getHash());
 

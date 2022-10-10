@@ -12,7 +12,7 @@ public class VideoMetadata extends AnalysisMetadata {
 
     private int detectionCounter = 0;
 
-    protected VideoMetadata(CustomMetadataMap metadataMap, AnalysisResult analysisResult) {
+    public VideoMetadata(CustomMetadataMap metadataMap, AnalysisResult analysisResult) {
         super(metadataMap, analysisResult);
     }
 

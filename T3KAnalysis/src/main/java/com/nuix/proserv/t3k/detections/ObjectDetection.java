@@ -7,7 +7,7 @@ import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
-public class ObjectDetection extends Detection {
+public class ObjectDetection extends Detection implements DetectionWithData {
     private static final long serialVersionUID = 1L;
 
     public static final String TYPE = "object";
@@ -25,7 +25,7 @@ public class ObjectDetection extends Detection {
     @Getter
     private String class_name;
 
-    private ObjectDetection() {}
+    protected ObjectDetection() {}
 
     @Override
     public String toString() {

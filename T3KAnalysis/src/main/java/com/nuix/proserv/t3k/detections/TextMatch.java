@@ -53,7 +53,7 @@ public class TextMatch implements Serializable {
     @Getter
     private double endCharacterPosition;
 
-    private TextMatch() {}
+    protected TextMatch() {}
 
     @Override
     public String toString() {

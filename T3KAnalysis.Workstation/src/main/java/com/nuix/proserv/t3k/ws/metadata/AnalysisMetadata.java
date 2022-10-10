@@ -11,6 +11,7 @@ import nuix.CustomMetadataMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
@@ -41,18 +42,56 @@ public abstract class AnalysisMetadata implements T3KMetadata {
             getMetadataMap().putText(T3K_DETECTION, T3K_NO_MATCHES);
         } else {
             getMetadataMap().putText(T3K_DETECTION, T3K_MATCH_FOUND);
+            getMetadataMap().putInteger(T3K_COUNT, detectionCount);
             analysisResult.forEachDetection(this::applyDetection);
         }
     }
 
     protected abstract void applyDetection(Detection detection);
 
+
+    private static Class<? extends AnalysisMetadata> lookupImplementationOrDefault(AnalysisResult analysisResult,
+                                                                                   Class<? extends AnalysisMetadata> defaultImpl) {
+
+        Class<? extends AnalysisMetadata> mdClass = null;
+
+        for(Map.Entry<String, Class<? extends AnalysisMetadata>> entry : ANALYSIS_METADATA_TYPES.entrySet()) {
+            try {
+                Class<? extends AnalysisResult> resultClass = (Class<? extends AnalysisResult>)Class.forName(entry.getKey());
+
+                if (resultClass.isAssignableFrom(analysisResult.getClass())) {
+                    mdClass = entry.getValue();
+                    break;
+                }
+            } catch (ClassNotFoundException e) {
+                LOG.error(e);
+                LOG.error("The located class can not be loaded, ignoring and trying others. {}", entry.getKey());
+            }
+        }
+
+        if (null == mdClass) {
+            return defaultImpl;
+        } else {
+            return mdClass;
+        }
+
+    }
+
     public static AnalysisMetadata getInstance(AnalysisResult analysisResult, CustomMetadataMap metadataMap) {
-        Class<? extends AnalysisMetadata> metadataClass = ANALYSIS_METADATA_TYPES.getOrDefault(analysisResult.getClass().getCanonicalName(), UnknownAnalysisTypeMetadata.class);
+        Class<? extends AnalysisMetadata> metadataClass = lookupImplementationOrDefault(analysisResult,
+                UnknownAnalysisTypeMetadata.class);
+
         try {
-            return metadataClass.getConstructor(CustomMetadataMap.class, AnalysisResult.class).newInstance(metadataMap, analysisResult);
+            Constructor<? extends AnalysisMetadata> constructor = metadataClass.getConstructor(CustomMetadataMap.class, AnalysisResult.class);
+            LOG.debug("Constructor: {}", constructor);
+
+            AnalysisMetadata metadata = constructor.newInstance(metadataMap, analysisResult);
+            LOG.debug("Metadata Implementation: {}", metadata);
+            return metadata;
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            LOG.error("A metadata implementation for the provided analysis type ({}) cannot be found or created.  Using a default one.", analysisResult.getClass().getCanonicalName());
+            LOG.error(e);
+            LOG.error("A metadata implementation for the provided analysis type ({}) cannot be found or created.  " +
+                    "Using a default one.", analysisResult.getClass().getCanonicalName());
             return new UnknownAnalysisTypeMetadata(metadataMap, analysisResult);
         }
     }

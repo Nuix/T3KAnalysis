@@ -14,8 +14,8 @@ import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 
 public class SingleItemAnalyzer extends Analyzer<String> {
-    public SingleItemAnalyzer(T3KApi api, String configPath, Configuration configuration, AnalysisListener listenerh) {
-        super(api, configPath, configuration, listenerh, null);
+    public SingleItemAnalyzer(T3KApi api, String configPath, Configuration configuration, AnalysisListener analysisListener, ResultsListener resultsListener) {
+        super(api, configPath, configuration, analysisListener, null, resultsListener);
     }
 
     private long uploadFile(long sourceId, String fileName) {
@@ -73,18 +73,25 @@ public class SingleItemAnalyzer extends Analyzer<String> {
         AnalysisResult analysisResult = getApi().getResults(resultId);
         LOG.debug("[{}/{}] {} analysis results: {}",
                 sourceId, resultId, fileName, analysisResult);
+        updateResultAnalyzed();
 
         if (null == analysisResult) {
-            LOG.error("[{}/{}] {} Anaysis failed for the file.", sourceId, resultId, fileName);
+            LOG.error("[{}/{}] {} Analysis failed for the file.", sourceId, resultId, fileName);
             updateAnalysisError(String.format(
                         "[%d/%d] %S.  There was an error processing the file.",
                         sourceId, resultId, fileName
             ));
+            updateResultError();
         } else {
             updateAnalysisUpdated(3, 3, String.format(
                         "[%d/%d] %s analysis completed.",
                         sourceId, resultId, fileName
             ));
+            if (0 == analysisResult.getDetectionCount()) {
+                updateResultNoMatch();
+            } else {
+                updateResultDetections(analysisResult.getDetectionCount());
+            }
         }
 
         return analysisResult;

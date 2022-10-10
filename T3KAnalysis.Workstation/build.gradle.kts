@@ -6,7 +6,7 @@ group = "com.nuix.proserv"
 version = "1.0-SNAPSHOT"
 val sourceCompatibility = 11
 val targetCompatibility = 11
-val nuixEngineVersion = "9.6.9.509"
+val nuixEngineVersion = "9.+"
 
 
 repositories {
@@ -42,18 +42,24 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.24")
     annotationProcessor("org.projectlombok:lombok:1.18.10")
 
-    implementation("com.nuix.proserv:T3KAnalysis:1.0-SNAPSHOT")
-    implementation("com.nuix.proserv:T3KAnalysis.Connector:1.0.2-SNAPSHOT")
+    implementation("com.nuix.proserv:T3KAnalysis:1.0.5-SNAPSHOT")
+    implementation("com.nuix.proserv:T3KAnalysis.Connector:1.0.3-SNAPSHOT")
     implementation("com.google.code.gson:gson:2.8.9")
     implementation("org.apache.logging.log4j:log4j-api:2.17.1")
     implementation("org.apache.logging.log4j:log4j-core:2.17.1")
     implementation(":nuix-scripting-api:$nuixEngineVersion")
     implementation(":nuix-scripting-impl:$nuixEngineVersion")
 
-    //testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    //testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    testImplementation("com.nuix.proserv:EngineTestHarness:1.0-SNAPSHOT")
+    testImplementation("commons-io:commons-io:2.8.0")
+    testImplementation("junit:junit:4.13.2")
 }
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+tasks.test {
+    useJUnit()
+    maxHeapSize = "10G"
 }

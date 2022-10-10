@@ -24,16 +24,22 @@ public abstract class Analyzer<T> {
 
     private final BatchListener bacthListener;
 
+    private final ResultsListener resultsListener;
+
     private final String configDirectory;
 
     private final T3KApi api;
 
-    protected Analyzer(T3KApi api, String configPath, Configuration configuration, AnalysisListener listener, BatchListener batchListener) {
+    protected Analyzer(T3KApi api, String configPath, Configuration configuration,
+                       AnalysisListener listener,
+                       BatchListener batchListener,
+                       ResultsListener resultsListener) {
         this.api = api;
         this.config = configuration;
         this.configDirectory = configPath;
         this.analysisListener = listener;
         this.bacthListener = batchListener;
+        this.resultsListener = resultsListener;
     }
 
     public abstract void analyze(T toAnalyze, BlockingQueue<AnalysisResult> completedResults);
@@ -89,6 +95,30 @@ public abstract class Analyzer<T> {
     protected void updateBatchCompleted(int index, int count, String message) {
         if(null != bacthListener) {
             bacthListener.batchCompleted(index, count, message);
+        }
+    }
+
+    protected void updateResultAnalyzed() {
+        if(null != resultsListener) {
+            resultsListener.incrementAnalyzed();
+        }
+    }
+
+    protected void updateResultError() {
+        if (null != resultsListener) {
+            resultsListener.incrementErrors();
+        }
+    }
+
+    protected void updateResultNoMatch() {
+        if (null != resultsListener) {
+            resultsListener.incrementNotMatched();
+        }
+    }
+
+    protected void updateResultDetections(int addedCount) {
+        if (null != resultsListener) {
+            resultsListener.addDetections(addedCount);
         }
     }
 

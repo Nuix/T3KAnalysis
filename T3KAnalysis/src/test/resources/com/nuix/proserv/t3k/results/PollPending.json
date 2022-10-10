@@ -1,8 +1,8 @@
 {
-    "id": "0",
-    "file_path": "host/path/file",
+    "id": 9,
+    "filepath": "/CORE/resources/data/828cbc6a-214f-41ca-9bd2-328d8688814b.jpg",
     "finished": false,
     "pending": true,
     "error": false,
-    "PROCESSING": "Processing"
+    "VALID_MEDIA": "Valid media object"
 }

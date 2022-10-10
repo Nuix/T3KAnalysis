@@ -8,7 +8,7 @@ public class PollResults {
     @Getter
     private long id;
     @Getter
-    private String file_path;
+    private String filepath;
     @Getter
     private String result_type;
     @Getter
@@ -29,7 +29,7 @@ public class PollResults {
     protected PollResults() {}
 
     public String toString() {
-        return file_path + " (ID " + id + ") of Type " + result_type +
+        return filepath + " (ID " + id + ") of Type " + result_type +
                 ":: Finished=" + finished + " [Valid: " + VALID_MEDIA_OBJECT + "]" +
                 " Pending=" + pending +
                 " Error=" + error + " [Broken=" + BROKEN_MEDIA +

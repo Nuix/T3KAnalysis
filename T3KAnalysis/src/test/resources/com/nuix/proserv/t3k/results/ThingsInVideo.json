@@ -1,0 +1,1162 @@
+{
+  "metadata": {
+    "id": 34,
+    "loadable": true,
+    "access_date": "2022-10-10 15:51:03.349548+00:00",
+    "modification_date": "2022-10-10 15:51:03.241549+00:00",
+    "creation_date": "2022-10-10 15:51:03.241549+00:00",
+    "file_size": 13180890,
+    "file_size_string": "13.2 MB",
+    "fps_video": 25.0,
+    "width": 360,
+    "height": 640,
+    "frame_count_video": 5955,
+    "key_frame_positions": [
+      0,
+      2,
+      27,
+      77,
+      85,
+      92,
+      177,
+      237,
+      251,
+      318,
+      360,
+      482,
+      554,
+      716,
+      752,
+      787,
+      844,
+      870,
+      952,
+      1033,
+      1055,
+      1140,
+      1219,
+      1297,
+      1347,
+      1466,
+      1495,
+      1643,
+      1745,
+      1820,
+      1887,
+      1922,
+      2004,
+      2109,
+      2135,
+      2379,
+      2465,
+      2506,
+      2719,
+      2772,
+      2845,
+      2916,
+      2953,
+      2974,
+      2992,
+      3005,
+      3013,
+      3035,
+      3059,
+      3093,
+      3270,
+      3442,
+      3519,
+      3560,
+      3648,
+      3682,
+      3779,
+      3885,
+      3981,
+      4044,
+      4076,
+      4237,
+      4341,
+      4446,
+      4611,
+      4659,
+      4783,
+      4823,
+      4934,
+      4963,
+      5087,
+      5144,
+      5204,
+      5385,
+      5558,
+      5751,
+      5806,
+      5860,
+      5903,
+      5934,
+      5950
+    ],
+    "n_key_frames": 81,
+    "positions_analyzed_for_keyframe_detection": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      11,
+      13,
+      15,
+      18,
+      22,
+      27,
+      31,
+      35,
+      40,
+      46,
+      52,
+      59,
+      67,
+      77,
+      85,
+      92,
+      100,
+      108,
+      117,
+      127,
+      138,
+      150,
+      163,
+      177,
+      190,
+      204,
+      220,
+      237,
+      251,
+      266,
+      282,
+      299,
+      318,
+      338,
+      360,
+      376,
+      394,
+      413,
+      434,
+      457,
+      482,
+      504,
+      528,
+      554,
+      581,
+      611,
+      643,
+      678,
+      716,
+      752,
+      787,
+      814,
+      844,
+      870,
+      884,
+      899,
+      915,
+      933,
+      952,
+      970,
+      989,
+      1010,
+      1033,
+      1055,
+      1074,
+      1094,
+      1116,
+      1140,
+      1164,
+      1190,
+      1219,
+      1243,
+      1269,
+      1297,
+      1321,
+      1347,
+      1373,
+      1401,
+      1432,
+      1466,
+      1495,
+      1520,
+      1547,
+      1576,
+      1608,
+      1643,
+      1674,
+      1708,
+      1745,
+      1781,
+      1820,
+      1852,
+      1887,
+      1922,
+      1947,
+      1974,
+      2004,
+      2027,
+      2052,
+      2079,
+      2109,
+      2135,
+      2157,
+      2181,
+      2207,
+      2236,
+      2267,
+      2301,
+      2338,
+      2379,
+      2420,
+      2465,
+      2506,
+      2542,
+      2581,
+      2623,
+      2669,
+      2719,
+      2772,
+      2807,
+      2845,
+      2879,
+      2916,
+      2953,
+      2974,
+      2992,
+      3005,
+      3013,
+      3018,
+      3023,
+      3029,
+      3035,
+      3040,
+      3046,
+      3052,
+      3059,
+      3065,
+      3071,
+      3078,
+      3085,
+      3093,
+      3101,
+      3109,
+      3118,
+      3128,
+      3139,
+      3151,
+      3164,
+      3178,
+      3193,
+      3210,
+      3228,
+      3248,
+      3270,
+      3293,
+      3318,
+      3345,
+      3375,
+      3407,
+      3442,
+      3479,
+      3519,
+      3560,
+      3602,
+      3648,
+      3682,
+      3703,
+      3726,
+      3751,
+      3779,
+      3802,
+      3827,
+      3855,
+      3885,
+      3914,
+      3946,
+      3981,
+      4011,
+      4044,
+      4076,
+      4103,
+      4132,
+      4164,
+      4199,
+      4237,
+      4269,
+      4303,
+      4341,
+      4373,
+      4408,
+      4446,
+      4482,
+      4521,
+      4564,
+      4611,
+      4659,
+      4697,
+      4738,
+      4783,
+      4823,
+      4857,
+      4894,
+      4934,
+      4963,
+      4990,
+      5020,
+      5052,
+      5087,
+      5114,
+      5144,
+      5173,
+      5204,
+      5228,
+      5254,
+      5283,
+      5314,
+      5348,
+      5385,
+      5423,
+      5464,
+      5509,
+      5558,
+      5600,
+      5646,
+      5696,
+      5751,
+      5806,
+      5860,
+      5903,
+      5934,
+      5950
+    ],
+    "n_positions_analyzed_for_keyframe_detection": 241,
+    "mediadata_format": "AVC",
+    "mediadata_duration_string": "2",
+    "md5": "8f84f597cf58b60572db6633883b5e94",
+    "sha1": "1fc31443db17be7843970366580757594fe55af5",
+    "sha256": "9f15f1056945e3b4cc81c17b43a36fa1530d30061dc6bab4bb5297cced3b4cab",
+    "file_path": "/CORE/resources/data/9d216ab4-e90f-4bc3-81e0-a1723daafe31.mkv",
+    "file_kind": "Video"
+  },
+  "detections": {
+    "0": {
+      "class_name": "gun",
+      "score": 71.0,
+      "box": [
+        0.30827218294143679,
+        0.34582263231277468,
+        0.7445381283760071,
+        0.8413680195808411
+      ],
+      "color": [
+        240,
+        128,
+        128
+      ],
+      "type": "object",
+      "info": "gun",
+      "data": [
+        "frame",
+        "85"
+      ]
+    },
+    "1": {
+      "class_name": "gun",
+      "score": 71.0,
+      "box": [
+        0.3259924054145813,
+        0.20126190781593324,
+        0.6424638032913208,
+        0.8201025724411011
+      ],
+      "color": [
+        240,
+        128,
+        128
+      ],
+      "type": "object",
+      "info": "gun",
+      "data": [
+        "frame",
+        "92"
+      ]
+    },
+    "2": {
+      "class_name": "gun",
+      "score": 65.0,
+      "box": [
+        0.09661746025085449,
+        0.3622848391532898,
+        0.4848482012748718,
+        0.5218936204910278
+      ],
+      "color": [
+        240,
+        128,
+        128
+      ],
+      "type": "object",
+      "info": "gun",
+      "data": [
+        "frame",
+        "844"
+      ]
+    },
+    "3": {
+      "class_name": "gun",
+      "score": 76.0,
+      "box": [
+        0.2675410509109497,
+        0.6519366502761841,
+        0.4863097667694092,
+        0.9147617816925049
+      ],
+      "color": [
+        240,
+        128,
+        128
+      ],
+      "type": "object",
+      "info": "gun",
+      "data": [
+        "frame",
+        "870"
+      ]
+    },
+    "4": {
+      "class_name": "gun",
+      "score": 65.0,
+      "box": [
+        0.1776425987482071,
+        0.2812543213367462,
+        0.47141551971435549,
+        0.914695143699646
+      ],
+      "color": [
+        240,
+        128,
+        128
+      ],
+      "type": "object",
+      "info": "gun",
+      "data": [
+        "frame",
+        "1466"
+      ]
+    },
+    "5": {
+      "class_name": "gun",
+      "score": 65.0,
+      "box": [
+        0.30657804012298586,
+        0.3025396466255188,
+        0.5260361433029175,
+        0.8462201952934265
+      ],
+      "color": [
+        240,
+        128,
+        128
+      ],
+      "type": "object",
+      "info": "gun",
+      "data": [
+        "frame",
+        "2506"
+      ]
+    },
+    "6": {
+      "class_name": "gun",
+      "score": 73.0,
+      "box": [
+        0.5456908941268921,
+        0.09681260585784912,
+        0.76451575756073,
+        0.35047629475593569
+      ],
+      "color": [
+        240,
+        128,
+        128
+      ],
+      "type": "object",
+      "info": "gun",
+      "data": [
+        "frame",
+        "4659"
+      ]
+    },
+    "7": {
+      "class_name": "gun",
+      "score": 61.0,
+      "box": [
+        0.18851900100708009,
+        0.1309984028339386,
+        0.44454896450042727,
+        0.9872986078262329
+      ],
+      "color": [
+        240,
+        128,
+        128
+      ],
+      "type": "object",
+      "info": "gun",
+      "data": [
+        "frame",
+        "4934"
+      ]
+    },
+    "8": {
+      "age": 1,
+      "gender": "male",
+      "gender_string": "♂",
+      "score": 5.5,
+      "box": [
+        0.5333333333333333,
+        0.1296875,
+        0.6527777777777778,
+        0.196875
+      ],
+      "color": [
+        182,
+        255,
+        55
+      ],
+      "type": "age/gender",
+      "info": "1 ♂",
+      "data": [
+        "frame",
+        "4659"
+      ]
+    },
+    "9": {
+      "age": 1,
+      "gender": "male",
+      "gender_string": "♂",
+      "score": 5.5,
+      "box": [
+        0.5333333333333333,
+        0.1296875,
+        0.6527777777777778,
+        0.196875
+      ],
+      "color": [
+        182,
+        255,
+        55
+      ],
+      "type": "age/gender",
+      "info": "1 ♂",
+      "data": [
+        "frame",
+        "4659"
+      ]
+    },
+    "10": {
+      "age": 1,
+      "gender": "male",
+      "gender_string": "♂",
+      "score": 5.5,
+      "box": [
+        0.5333333333333333,
+        0.1296875,
+        0.6527777777777778,
+        0.196875
+      ],
+      "color": [
+        182,
+        255,
+        55
+      ],
+      "type": "age/gender",
+      "info": "1 ♂",
+      "data": [
+        "frame",
+        "4659"
+      ]
+    },
+    "11": {
+      "similarity": 0.2619970738887787,
+      "id": 103,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "85"
+      ]
+    },
+    "12": {
+      "similarity": 0.25802335143089297,
+      "id": 104,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "92"
+      ]
+    },
+    "13": {
+      "similarity": 0.243067666888237,
+      "id": 105,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "177"
+      ]
+    },
+    "14": {
+      "similarity": 0.25034216046333315,
+      "id": 106,
+      "type": "CCR",
+      "info": "violence_riot",
+      "data": [
+        "frame",
+        "237"
+      ]
+    },
+    "15": {
+      "similarity": 0.2713916301727295,
+      "id": 107,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "251"
+      ]
+    },
+    "16": {
+      "similarity": 0.2610008418560028,
+      "id": 108,
+      "type": "CCR",
+      "info": "drug_smoking",
+      "data": [
+        "frame",
+        "318"
+      ]
+    },
+    "17": {
+      "similarity": 0.26290082931518557,
+      "id": 110,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "360"
+      ]
+    },
+    "18": {
+      "similarity": 0.2648836374282837,
+      "id": 111,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "482"
+      ]
+    },
+    "19": {
+      "similarity": 0.2540327310562134,
+      "id": 112,
+      "type": "CCR",
+      "info": "drug_powder",
+      "data": [
+        "frame",
+        "554"
+      ]
+    },
+    "20": {
+      "similarity": 0.22742557525634767,
+      "id": 113,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "716"
+      ]
+    },
+    "21": {
+      "similarity": 0.22173069417476655,
+      "id": 114,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "752"
+      ]
+    },
+    "22": {
+      "similarity": 0.24706648290157319,
+      "id": 116,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "787"
+      ]
+    },
+    "23": {
+      "similarity": 0.25475355982780459,
+      "id": 117,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "844"
+      ]
+    },
+    "24": {
+      "similarity": 0.289310097694397,
+      "id": 118,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "870"
+      ]
+    },
+    "25": {
+      "similarity": 0.2918919622898102,
+      "id": 119,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "1140"
+      ]
+    },
+    "26": {
+      "similarity": 0.27318432927131655,
+      "id": 120,
+      "type": "CCR",
+      "info": "drug_smoking",
+      "data": [
+        "frame",
+        "1219"
+      ]
+    },
+    "27": {
+      "similarity": 0.2276117205619812,
+      "id": 121,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "1297"
+      ]
+    },
+    "28": {
+      "similarity": 0.23390130698680879,
+      "id": 122,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "1347"
+      ]
+    },
+    "29": {
+      "similarity": 0.26039639115333559,
+      "id": 123,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "1466"
+      ]
+    },
+    "30": {
+      "similarity": 0.2443721443414688,
+      "id": 125,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "1495"
+      ]
+    },
+    "31": {
+      "similarity": 0.24341356754302979,
+      "id": 128,
+      "type": "CCR",
+      "info": "violence_riot",
+      "data": [
+        "frame",
+        "1820"
+      ]
+    },
+    "32": {
+      "similarity": 0.2705167531967163,
+      "id": 130,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "1922"
+      ]
+    },
+    "33": {
+      "similarity": 0.28688284754753115,
+      "id": 131,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "2004"
+      ]
+    },
+    "34": {
+      "similarity": 0.23332639038562776,
+      "id": 132,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "2109"
+      ]
+    },
+    "35": {
+      "similarity": 0.2645496428012848,
+      "id": 135,
+      "type": "CCR",
+      "info": "drug_smoking",
+      "data": [
+        "frame",
+        "2465"
+      ]
+    },
+    "36": {
+      "similarity": 0.2514096796512604,
+      "id": 137,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "2506"
+      ]
+    },
+    "37": {
+      "similarity": 0.24042701721191407,
+      "id": 138,
+      "type": "CCR",
+      "info": "violence_riot",
+      "data": [
+        "frame",
+        "2719"
+      ]
+    },
+    "38": {
+      "similarity": 0.24879279732704163,
+      "id": 140,
+      "type": "CCR",
+      "info": "violence_riot",
+      "data": [
+        "frame",
+        "2772"
+      ]
+    },
+    "39": {
+      "similarity": 0.2459656298160553,
+      "id": 142,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "2845"
+      ]
+    },
+    "40": {
+      "similarity": 0.2461467683315277,
+      "id": 143,
+      "type": "CCR",
+      "info": "violence_injury",
+      "data": [
+        "frame",
+        "2916"
+      ]
+    },
+    "41": {
+      "similarity": 0.2757568657398224,
+      "id": 145,
+      "type": "CCR",
+      "info": "violence_riot",
+      "data": [
+        "frame",
+        "2992"
+      ]
+    },
+    "42": {
+      "similarity": 0.2779105603694916,
+      "id": 149,
+      "type": "CCR",
+      "info": "drug_smoking",
+      "data": [
+        "frame",
+        "3005"
+      ]
+    },
+    "43": {
+      "similarity": 0.25876057147979739,
+      "id": 152,
+      "type": "CCR",
+      "info": "violence_riot",
+      "data": [
+        "frame",
+        "3013"
+      ]
+    },
+    "44": {
+      "similarity": 0.26414820551872256,
+      "id": 154,
+      "type": "CCR",
+      "info": "drug_smoking",
+      "data": [
+        "frame",
+        "3093"
+      ]
+    },
+    "45": {
+      "similarity": 0.28792932629585268,
+      "id": 155,
+      "type": "CCR",
+      "info": "drug_smoking",
+      "data": [
+        "frame",
+        "3270"
+      ]
+    },
+    "46": {
+      "similarity": 0.24426528811454774,
+      "id": 158,
+      "type": "CCR",
+      "info": "violence_riot",
+      "data": [
+        "frame",
+        "3442"
+      ]
+    },
+    "47": {
+      "similarity": 0.26232126355171206,
+      "id": 160,
+      "type": "CCR",
+      "info": "drug_smoking",
+      "data": [
+        "frame",
+        "3648"
+      ]
+    },
+    "48": {
+      "similarity": 0.2343549281358719,
+      "id": 162,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "3682"
+      ]
+    },
+    "49": {
+      "similarity": 0.2445649653673172,
+      "id": 164,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "3779"
+      ]
+    },
+    "50": {
+      "similarity": 0.27851825952529909,
+      "id": 165,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "3885"
+      ]
+    },
+    "51": {
+      "similarity": 0.22168515622615815,
+      "id": 166,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "4237"
+      ]
+    },
+    "52": {
+      "similarity": 0.26950711011886599,
+      "id": 167,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "4341"
+      ]
+    },
+    "53": {
+      "similarity": 0.24114350974559785,
+      "id": 168,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "4446"
+      ]
+    },
+    "54": {
+      "similarity": 0.27158430218696597,
+      "id": 169,
+      "type": "CCR",
+      "info": "drug_smoking",
+      "data": [
+        "frame",
+        "4611"
+      ]
+    },
+    "55": {
+      "similarity": 0.25979018211364748,
+      "id": 172,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "4659"
+      ]
+    },
+    "56": {
+      "similarity": 0.2614675760269165,
+      "id": 173,
+      "type": "CCR",
+      "info": "drug_smoking",
+      "data": [
+        "frame",
+        "4783"
+      ]
+    },
+    "57": {
+      "similarity": 0.2373090535402298,
+      "id": 175,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "4823"
+      ]
+    },
+    "58": {
+      "similarity": 0.2514035403728485,
+      "id": 176,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "4963"
+      ]
+    },
+    "59": {
+      "similarity": 0.2215411216020584,
+      "id": 177,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "5087"
+      ]
+    },
+    "60": {
+      "similarity": 0.22697821259498597,
+      "id": 178,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "5144"
+      ]
+    },
+    "61": {
+      "similarity": 0.2782987654209137,
+      "id": 180,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "5204"
+      ]
+    },
+    "62": {
+      "similarity": 0.2618626654148102,
+      "id": 181,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "5385"
+      ]
+    },
+    "63": {
+      "similarity": 0.2459128499031067,
+      "id": 182,
+      "type": "CCR",
+      "info": "violence_injury",
+      "data": [
+        "frame",
+        "5751"
+      ]
+    },
+    "64": {
+      "similarity": 0.24755540490150453,
+      "id": 184,
+      "type": "CCR",
+      "info": "violence_injury",
+      "data": [
+        "frame",
+        "5806"
+      ]
+    },
+    "65": {
+      "similarity": 0.24166207015514375,
+      "id": 185,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "5860"
+      ]
+    },
+    "66": {
+      "similarity": 0.2595504820346832,
+      "id": 186,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "5903"
+      ]
+    },
+    "67": {
+      "similarity": 0.23474667966365815,
+      "id": 188,
+      "type": "CCR",
+      "info": "violence_weapons",
+      "data": [
+        "frame",
+        "5934"
+      ]
+    }
+  },
+  "nalvis_result": {
+    "0": "Z0FBQ..."
+  }
+}

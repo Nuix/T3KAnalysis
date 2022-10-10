@@ -7,7 +7,7 @@ import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
-public class PersonDetection extends Detection {
+public class PersonDetection extends Detection implements DetectionWithData {
     private static final long serialVersionUID = 1L;
 
     public static final String TYPE = "age/gender";
@@ -27,7 +27,7 @@ public class PersonDetection extends Detection {
     @Getter
     private int age;
 
-    private PersonDetection() {}
+    protected PersonDetection() {}
 
     @Override
     public String toString() {

@@ -25,7 +25,7 @@ public class MD5Detection extends Detection {
     @Getter
     private Map<String, String> metadata;
 
-    private MD5Detection() {}
+    protected MD5Detection() {}
 
     @Override
     public String toString() {

@@ -14,7 +14,7 @@ public class DocumentMetadata extends AnalysisMetadata {
     private int detectionCounter = 0;
 
 
-    protected DocumentMetadata(CustomMetadataMap metadataMap, AnalysisResult analysisResult) {
+    public DocumentMetadata(CustomMetadataMap metadataMap, AnalysisResult analysisResult) {
         super(metadataMap, analysisResult);
     }
 

@@ -21,6 +21,8 @@ public class PollResultTests {
             System.out.println(results);
             assertTrue(results.isFinished());
             assertFalse(results.isPending());
+            assertEquals(9L, results.getId());
+            assertEquals("/CORE/resources/data/828cbc6a-214f-41ca-9bd2-328d8688814b.jpg", results.getFilepath());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -37,6 +39,8 @@ public class PollResultTests {
             System.out.println(results);
             assertFalse(results.isFinished());
             assertTrue(results.isPending());
+            assertEquals(9L, results.getId());
+            assertEquals("/CORE/resources/data/828cbc6a-214f-41ca-9bd2-328d8688814b.jpg", results.getFilepath());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
