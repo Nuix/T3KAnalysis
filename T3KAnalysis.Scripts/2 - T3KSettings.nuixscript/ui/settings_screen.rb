@@ -1,8 +1,10 @@
 script_directory = File.dirname $0
 require_relative File.join script_directory, '..', 'libs.nuixscript', 'NxBootstrap'
 
-def build_settings_dialog()
+def build_settings_dialog(settings_file)
   dialog = TabbedCustomDialog.new
+
+  dialog.enable_sticky_settings settings_file
 
   # dialog.set_help_file help_file  todo Make a help file
   dialog.hide_file_menu
