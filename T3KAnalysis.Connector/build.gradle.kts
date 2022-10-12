@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.nuix.proserv"
-version = "1.0.3-SNAPSHOT"
+version = "1.0.4-SNAPSHOT"
 
 val sourceCompatibility = 11
 val targetCompatibility = 11

@@ -26,7 +26,7 @@ public class Configuration {
     private int nuix_retry_count = 50;
 
     @Getter @Setter
-    private int nuix_retry_seconds = 1;
+    private int nuix_retry_delay_seconds = 1;
 
     @Getter @Setter
     @SerializedName("Nuix Worker Settings")

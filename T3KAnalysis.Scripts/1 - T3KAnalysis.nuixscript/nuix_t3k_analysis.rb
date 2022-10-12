@@ -120,7 +120,7 @@ def cleanup_ui(pd)
 end
 
 if File.exist? settings_file
-  scripting_base = ScriptingBase.new utilities, current_case, settings_file
+  scripting_base = ScriptingBase.new settings_file
   result = LinkedBlockingQueue.new
 
   source_guids = current_selected_items.map { |item| item.guid }.compact
@@ -131,7 +131,7 @@ if File.exist? settings_file
     pd.set_main_progress 0, 4
     pd.sub_progress_visible = true
 
-    exported_files = scripting_base.export_items(current_selected_items) do | index, count, message |
+    exported_files = scripting_base.export_items(current_selected_items, utilities) do | index, count, message |
       pd.set_sub_progress index, count
       unless message.nil?
         pd.log_message message
@@ -141,7 +141,7 @@ if File.exist? settings_file
     pd.main_status_and_log_it = "Processing with T3K"
     report = ProgressReport.new pd, report_data
     scripting_base.analyze exported_files, result, report, report, report
-    scripting_base.process_results result
+    scripting_base.process_results result, current_case
 
     cleanup_ui pd
 

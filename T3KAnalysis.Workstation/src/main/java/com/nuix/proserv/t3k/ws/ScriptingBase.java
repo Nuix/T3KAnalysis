@@ -69,9 +69,6 @@ public class ScriptingBase {
     }
 
     @Getter
-    private final Utilities utilities;
-
-    @Getter
     private final Configuration config;
 
     @Getter
@@ -79,12 +76,7 @@ public class ScriptingBase {
 
     private final String pathToConfig;
 
-    private final Case current_case;
-
-
-    public ScriptingBase(Utilities utilities, Case current_case, String pathToConfig) {
-        this.utilities = utilities;
-        this.current_case = current_case;
+    public ScriptingBase(String pathToConfig) {
         this.pathToConfig = pathToConfig;
 
         this.app = new Application(pathToConfig);
@@ -92,9 +84,13 @@ public class ScriptingBase {
 
     }
 
-    public List<String> exportItems(List<Item> itemsToExport, ProgressListener listener) {
+    public List<String> exportItems(List<Item> itemsToExport, Utilities utilities, ProgressListener listener) {
         LOG.trace("Exporting items: itemsToExport");
-        SingleItemExporter exporter = getUtilities().getBinaryExporter();
+        if(null == utilities) {
+            throw new IllegalStateException("The utilities object must not be null when exporting items.");
+        }
+
+        SingleItemExporter exporter = utilities.getBinaryExporter();
 
         List<Item> exportList = List.copyOf(itemsToExport);
 
@@ -128,7 +124,7 @@ public class ScriptingBase {
         return exportedItems;
     }
 
-    public void processResults(BlockingQueue<AnalysisResult> results) {
+    public void processResults(BlockingQueue<AnalysisResult> results, Case current_case) {
 
         while(true) {
             AnalysisResult currentResult = null;

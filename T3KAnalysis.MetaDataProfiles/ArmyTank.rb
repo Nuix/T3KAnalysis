@@ -1,9 +1,14 @@
 item = $current_item
 metadata = item.custom_metadata
 
+java_import "com.nuix.proserv.t3k.ws.MetadataProfileBase"
+
 # Find these things
 obj_label = "army_tank"
 
+MetaDataProfileBase::display_object_data metadata, obj_label
+
+=begin
 # Display this many in the field
 results_count = 2
 
@@ -49,3 +54,4 @@ if metadata.include? "T3K Detections"
 end
 
 output
+=end

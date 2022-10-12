@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
@@ -81,7 +80,7 @@ public class Application {
         LOG.debug("Configuration: " + config);
 
         api = new T3KApi(config.getT3k_server_url(), config.getT3k_server_port(),
-                config.getNuix_batch_size(), config.getNuix_retry_count(), config.getNuix_retry_seconds());
+                config.getNuix_batch_size(), config.getNuix_retry_count(), config.getNuix_retry_delay_seconds());
 
         exportLocation = config.getNuix_output_path();
 
