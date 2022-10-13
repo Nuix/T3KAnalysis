@@ -1,9 +1,12 @@
 package com.nuix.proserv.t3k.ws;
 
+import com.nuix.proserv.t3k.T3KApiException;
 import com.nuix.proserv.t3k.conn.AnalysisListener;
 import com.nuix.proserv.t3k.conn.Application;
 import com.nuix.proserv.t3k.conn.BatchListener;
 import com.nuix.proserv.t3k.conn.ResultsListener;
+import com.nuix.proserv.t3k.detections.ObjectDetection;
+import com.nuix.proserv.t3k.detections.PersonDetection;
 import com.nuix.proserv.t3k.results.AnalysisResult;
 import com.nuix.proserv.t3k.ws.metadata.AnalysisMetadata;
 import lombok.Getter;
@@ -21,11 +24,16 @@ import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.config.AppenderRef;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.commons.lang3.StringUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 
@@ -73,6 +81,9 @@ public class ScriptingBase {
 
     @Getter
     private final Application app;
+
+    @Getter
+    private final Set<String> foundDetectionTypes = new HashSet<>();
 
     private final String pathToConfig;
 
@@ -124,7 +135,65 @@ public class ScriptingBase {
         return exportedItems;
     }
 
-    public void processResults(BlockingQueue<AnalysisResult> results, Case current_case) {
+    private String buildScriptForContent(String content) {
+        String scriptedMetadata = "";
+        if ("person".equals(content.toLowerCase())) {
+            scriptedMetadata = "java_import \"com.nuix.proserv.t3k.ws.MetadataProfileBase\"\n" +
+                    "MetadataProfileBase::display_person_data $current_item.custom_metadata";
+        } else {
+            scriptedMetadata = String.format("java_import \"com.nuix.proserv.t3k.ws.MetadataProfileBase\"\n" +
+                    "MetadataProfileBase::display_object_data $current_item.custom_metadata, \"%s\"", content);
+        }
+
+        return scriptedMetadata;
+    }
+
+    private void createColumn(Document doc, Element parent, String type, String name, String width, String content) {
+        Element col = doc.createElement("metadata");
+        col.setAttribute("type", type);
+        col.setAttribute("name", name);
+        col.setAttribute("default-column-width", width);
+        parent.appendChild(col);
+
+        if(null != content) {
+            Element scriptExpression = doc.createElement("scripted-expression");
+            col.appendChild(scriptExpression);
+            Element scriptType = doc.createElement("type");
+            scriptType.appendChild(doc.createTextNode("ruby"));
+            scriptExpression.appendChild(scriptType);
+
+            Element script = doc.createElement("script");
+            script.appendChild(doc.createCDATASection(buildScriptForContent(content)));
+            scriptExpression.appendChild(script);
+        }
+    }
+
+    private void createMetadataProfile(Case currentCase, Set<String> foundData) {
+        try {
+            DocumentBuilder profileBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Document metadataProfile = profileBuilder.newDocument();
+            Element profile = metadataProfile.createElementNS("http://nuix.com/fbi/metadata-profile", "metadata-profile");
+            metadataProfile.appendChild(profile);
+            Element metadateList = metadataProfile.createElement("metadata-list");
+            profile.appendChild(metadateList);
+
+            // Default columns
+            createColumn(metadataProfile, metadateList, "SPECIAL", "Name", "150", null);
+            createColumn(metadataProfile, metadateList, "CUSTOM", "T3K Detections", "150", null);
+            createColumn(metadataProfile, metadateList, "CUSTOM", "T3K Detections|Count", "100", null);
+
+            // Columns for each found item
+            foundData.forEach(found -> {
+                String foundName = StringUtils.capitalize(StringUtils.replaceChars(found, '_', ' '));
+                createColumn(metadataProfile, metadateList, "SPECIAL", foundName, "30", found);
+            });
+
+        } catch (ParserConfigurationException e) {
+            throw new T3KApiException("Error creating an XML Parser for the T3K Custom Metadata Profile.", e);
+        }
+    }
+
+    public void processResults(BlockingQueue<AnalysisResult> results, Case currentCase) {
 
         while(true) {
             AnalysisResult currentResult = null;
@@ -147,12 +216,20 @@ public class ScriptingBase {
 
             String guidSearch = String.format("guid:%s", guid);
             try {
-                List<Item> foundItems = current_case.search(guidSearch);
+                List<Item> foundItems = currentCase.search(guidSearch);
                 // Item list should be a singleton, but iterate anyway just to be safe...
                 for(Item foundItem : foundItems) {
                     CustomMetadataMap metadataMap = foundItem.getCustomMetadata();
                     AnalysisMetadata metadataApplier = AnalysisMetadata.getInstance(currentResult, metadataMap);
                     metadataApplier.applyResults();
+
+                    currentResult.forEachDetection(detection -> {
+                        if(PersonDetection.TYPE.equals(detection.getType())) {
+                            foundDetectionTypes.add("person");
+                        } else if (ObjectDetection.TYPE.equals(detection.getType())) {
+                            foundDetectionTypes.add(((ObjectDetection)detection).getClass_name());
+                        }
+                    });
                 }
             } catch (IOException e) {
                 LOG.error("{} while searching the case for item with guid {}.  Skipping results for this item",

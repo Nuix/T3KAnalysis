@@ -6,7 +6,23 @@ java_import "com.nuix.proserv.t3k.ws.MetadataProfileBase"
 # Find these things
 obj_label = "army_tank"
 
-MetaDataProfileBase::display_object_data metadata, obj_label
+MetadataProfileBase::display_object_data metadata, obj_label
+
+
+
+File.write("#{$current_case.getLocation().getAbsolutePath()}/Stores/User Data/Metadata Profiles/Nuix NLP Context Search.profile",
+           "<?xml version='1.0' encoding='UTF-8'?>
+                    <metadata-profile xmlns='http://nuix.com/fbi/metadata-profile'>
+                      <metadata-list>
+                        <metadata type='SPECIAL' name='Name' default-column-width='436' />
+                        <metadata type='SPECIAL' name='File Type' default-column-width='355' />
+                        <metadata type='CUSTOM' name='#{results_tag}_proximity' default-column-width='280' />
+                      </metadata-list>
+                    </metadata-profile>")
+store = $current_case.getMetadataProfileStore()
+mdp = store.getMetadataProfile("Nuix NLP Context Search")
+$window.openTab("workbench",{"search"=>"tag:#{results_tag}","metadataProfile"=>mdp})
+
 
 =begin
 # Display this many in the field
