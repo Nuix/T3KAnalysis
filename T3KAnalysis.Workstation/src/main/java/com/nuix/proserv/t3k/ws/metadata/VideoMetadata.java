@@ -8,7 +8,7 @@ import com.nuix.proserv.t3k.ws.metadata.detections.DetectionMetadata;
 import nuix.CustomMetadataMap;
 
 public class VideoMetadata extends AnalysisMetadata {
-    private static final String T3K_DATA = "%s/Frame";
+    private static final String T3K_DATA = "%s|Frame";
 
     private int detectionCounter = 0;
 

@@ -154,6 +154,8 @@ if File.exist? settings_file
 
   guid_search = "guid:(#{source_guids.join " OR "})"
   window.close_all_tabs
-  window.open_tab "workbench", {"search" => guid_search, "metadataProfile" => "T3K"}
+  store = current_case.metadata_profile_store
+  mdp = store.get_metadata_profile "T3K Results"
+  window.open_tab "workbench", {"search" => guid_search, "metadataProfile" => mdp}
 
 end

@@ -8,8 +8,8 @@ import com.nuix.proserv.t3k.ws.metadata.detections.DetectionMetadata;
 import nuix.CustomMetadataMap;
 
 public class DocumentMetadata extends AnalysisMetadata {
-    private static final String T3K_PAGE = "%s/Page";
-    private static final String T3K_IMAGE = "%s/Image";
+    private static final String T3K_PAGE = "%s|Page";
+    private static final String T3K_IMAGE = "%s|Image";
 
     private int detectionCounter = 0;
 

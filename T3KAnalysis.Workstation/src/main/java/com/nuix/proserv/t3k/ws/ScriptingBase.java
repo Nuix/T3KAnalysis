@@ -25,13 +25,21 @@ import org.apache.logging.log4j.core.config.AppenderRef;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.commons.lang3.StringUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -82,9 +90,6 @@ public class ScriptingBase {
     @Getter
     private final Application app;
 
-    @Getter
-    private final Set<String> foundDetectionTypes = new HashSet<>();
-
     private final String pathToConfig;
 
     public ScriptingBase(String pathToConfig) {
@@ -133,6 +138,61 @@ public class ScriptingBase {
         }
 
         return exportedItems;
+    }
+
+    private String getMetadataProfilePath(Case currentCase) {
+        String metadataProfilePath = currentCase.getLocation().getAbsolutePath() + File.separator +
+                "Stores" + File.separator + "User Data" + File.separator +
+                "Metadata Profiles" + File.separator + "T3K Results.profile";
+        File metadataProfileFile = new File(metadataProfilePath);
+/*
+        if (!metadataProfileFile.exists()) {
+            try {
+                metadataProfileFile.createNewFile();
+            } catch (IOException e) {
+                throw new T3KApiException("Error creating the T3K Metadata Profile for this case.", e);
+            }
+        }
+*/
+        return metadataProfileFile.getAbsolutePath();
+    }
+    private Set<String> readExistingColumns(Case currentCase) {
+        String metadataProfilePath = getMetadataProfilePath(currentCase);
+        Set<String> existingColumns = new HashSet<>();
+
+        if (Files.notExists(Path.of(metadataProfilePath))) {
+            return existingColumns;
+        }
+
+        try {
+            DocumentBuilder profileBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Document metadataProfile = profileBuilder.parse(metadataProfilePath);
+            metadataProfile.getDocumentElement().normalize();
+
+            NodeList metadataColumns = metadataProfile.getElementsByTagName("metadata");
+            int numberOfColumns = metadataColumns.getLength();
+
+            if (0 == numberOfColumns) {
+                return existingColumns;
+            }
+
+            for(int columnIndex = 0; columnIndex < numberOfColumns; columnIndex++) {
+                Node metadataColumn = metadataColumns.item(columnIndex);
+                NamedNodeMap metadataColumnDetails = metadataColumn.getAttributes();
+                if(null != metadataColumnDetails) {
+                    String name = metadataColumnDetails.getNamedItem("name").getNodeValue();
+                    if(null != name && !"Name".equals(name) && !"T3K Detections".equals(name) && !"T3K Detections|Count".equals(name)) {
+                        String contentValue = StringUtils.replaceChars(name, " ", "_").toLowerCase();
+                        existingColumns.add(contentValue);
+                    }
+                }
+            }
+
+            return existingColumns;
+
+        } catch (ParserConfigurationException|IOException|SAXException e) {
+            throw new T3KApiException("Error reading the T3K Metadata Profile", e);
+        }
     }
 
     private String buildScriptForContent(String content) {
@@ -188,12 +248,24 @@ public class ScriptingBase {
                 createColumn(metadataProfile, metadateList, "SPECIAL", foundName, "30", found);
             });
 
+            String metadataProfilePath = getMetadataProfilePath(currentCase);
+            try {
+
+                DOMSource metadataProfileDOM = new DOMSource(metadataProfile);
+                Transformer transformer = TransformerFactory.newInstance().newTransformer();
+                StreamResult outputResult = new StreamResult(metadataProfilePath);
+                transformer.transform(metadataProfileDOM, outputResult);
+            } catch (TransformerException e) {
+                throw new T3KApiException("Error writing T3K Metadata Profile to disk", e);
+            }
+
         } catch (ParserConfigurationException e) {
             throw new T3KApiException("Error creating an XML Parser for the T3K Custom Metadata Profile.", e);
         }
     }
 
     public void processResults(BlockingQueue<AnalysisResult> results, Case currentCase) {
+        Set<String> foundDetectionTypes = readExistingColumns(currentCase);
 
         while(true) {
             AnalysisResult currentResult = null;
@@ -236,6 +308,8 @@ public class ScriptingBase {
                         e.getMessage(), guid);
             }
         }
+
+        createMetadataProfile(currentCase, foundDetectionTypes);
     }
 
     public void analyze(List<String> filesToAnalyze, BlockingQueue<AnalysisResult> completedResults,
