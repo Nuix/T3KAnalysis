@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.nuix.proserv"
-version = "1.0.4-SNAPSHOT"
+version = "1.0.5-SNAPSHOT"
 
 val sourceCompatibility = 11
 val targetCompatibility = 11
@@ -43,7 +43,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.24")
     annotationProcessor("org.projectlombok:lombok:1.18.10")
 
-    implementation("com.nuix.proserv:T3KAnalysis:1.0.5-SNAPSHOT")
+    implementation("com.nuix.proserv:T3KAnalysis:1.0.6-SNAPSHOT")
     implementation("com.google.code.gson:gson:2.8.9")
     implementation("org.apache.logging.log4j:log4j-api:2.17.1")
     implementation("org.apache.logging.log4j:log4j-core:2.17.1")

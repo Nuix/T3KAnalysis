@@ -5,6 +5,7 @@ import com.nuix.proserv.t3k.conn.AnalysisListener;
 import com.nuix.proserv.t3k.conn.Application;
 import com.nuix.proserv.t3k.conn.BatchListener;
 import com.nuix.proserv.t3k.conn.ResultsListener;
+import com.nuix.proserv.t3k.detections.CCRDetection;
 import com.nuix.proserv.t3k.detections.ObjectDetection;
 import com.nuix.proserv.t3k.detections.PersonDetection;
 import com.nuix.proserv.t3k.results.AnalysisResult;
@@ -14,6 +15,7 @@ import nuix.*;
 
 
 import com.nuix.proserv.t3k.conn.config.Configuration;
+import org.apache.commons.lang3.text.WordUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -244,7 +246,7 @@ public class ScriptingBase {
 
             // Columns for each found item
             foundData.forEach(found -> {
-                String foundName = StringUtils.capitalize(StringUtils.replaceChars(found, '_', ' '));
+                String foundName = WordUtils.capitalize(StringUtils.replaceChars(found, '_', ' '));
                 createColumn(metadataProfile, metadateList, "SPECIAL", foundName, "30", found);
             });
 
@@ -300,6 +302,8 @@ public class ScriptingBase {
                             foundDetectionTypes.add("person");
                         } else if (ObjectDetection.TYPE.equals(detection.getType())) {
                             foundDetectionTypes.add(((ObjectDetection)detection).getClass_name());
+                        } else if (CCRDetection.TYPE.equals(detection.getType())) {
+                            foundDetectionTypes.add(((CCRDetection)detection).getInfo());
                         }
                     });
                 }

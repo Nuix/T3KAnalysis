@@ -21,7 +21,8 @@ public abstract class DetectionMetadata implements T3KMetadata {
             PersonDetection.TYPE, PersonMetadata.class,
             ObjectDetection.TYPE, ObjectMetadata.class,
             MD5Detection.TYPE, MD5Metadata.class,
-            TextDetection.TYPE, TextMetadata.class
+            TextDetection.TYPE, TextMetadata.class,
+            CCRDetection.TYPE, CCRMetadata.class
     );
 
     @Getter

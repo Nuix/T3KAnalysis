@@ -58,6 +58,7 @@ public abstract class AnalysisMetadata implements T3KMetadata {
         for(Map.Entry<String, Class<? extends AnalysisMetadata>> entry : ANALYSIS_METADATA_TYPES.entrySet()) {
             try {
                 Class<? extends AnalysisResult> resultClass = (Class<? extends AnalysisResult>)Class.forName(entry.getKey());
+                LOG.debug("Working on {}", resultClass.getCanonicalName());
 
                 if (resultClass.isAssignableFrom(analysisResult.getClass())) {
                     mdClass = entry.getValue();
