@@ -33,7 +33,8 @@ public class DetectionTypeMap implements JsonDeserializer<Detection> {
             Map.of(PersonDetection.TYPE, PersonDetection.class,
                     ObjectDetection.TYPE, ObjectDetection.class,
                     MD5Detection.TYPE, MD5Detection.class,
-                    TextDetection.TYPE, TextDetection.class)
+                    TextDetection.TYPE, TextDetection.class,
+                    CCRDetection.TYPE, CCRDetection.class)
     );
 
 

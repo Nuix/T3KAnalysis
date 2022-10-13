@@ -1,0 +1,29 @@
+{
+  "metadata":{
+    "file_path" : "/CORE/resources/data/5c3cea0a-b4e2-428c-a5d1-db38eb41ae33.jpg",
+    "sha256" : "83bde9df6fd287298ea5aea1d6ca1acba00d94bd4cd37deab94af6beb3e18298",
+    "access_date" : "2022-10-05 19:35:28.343326+00:00",
+    "loadable" : true,
+    "creation_date" : "2022-10-05 19:35:28.324324+00:00",
+    "file_size_string" : "189.0 kB",
+    "file_size" : 188979,
+    "mode" : "RGB",
+    "sha1" : "a26cd7ee54fa10df5be69a4c4c68e70971e965c5",
+    "file_kind" : "Picture",
+    "size" : "1200x675",
+    "modification_date" : "2022-10-05 19:35:28.324324+00:00",
+    "width" : 1200,
+    "id"  : 0,
+    "height" : 675,
+    "md5" : "6b5c7cc14a505bf0ac55553beb16ad64"
+  },
+  "detections" :{
+    "0":{
+      "data" : null,
+      "similarity" :0.22815626859664917,
+      "id" : 50,
+      "type" : "CCR",
+      "info" : "violence_weapons"
+    }
+  }
+}
