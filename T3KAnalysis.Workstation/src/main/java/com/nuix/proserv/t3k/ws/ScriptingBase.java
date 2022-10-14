@@ -10,6 +10,10 @@ import com.nuix.proserv.t3k.detections.ObjectDetection;
 import com.nuix.proserv.t3k.detections.PersonDetection;
 import com.nuix.proserv.t3k.results.AnalysisResult;
 import com.nuix.proserv.t3k.ws.metadata.AnalysisMetadata;
+import com.nuix.proserv.t3k.ws.metadataprofile.Metadata;
+import com.nuix.proserv.t3k.ws.metadataprofile.MetadataProfile;
+import com.nuix.proserv.t3k.ws.metadataprofile.MetadataProfileReaderWriter;
+import com.nuix.proserv.t3k.ws.metadataprofile.ScriptedExpression;
 import lombok.Getter;
 import nuix.*;
 
@@ -142,132 +146,39 @@ public class ScriptingBase {
         return exportedItems;
     }
 
-    private String getMetadataProfilePath(Case currentCase) {
-        String metadataProfilePath = currentCase.getLocation().getAbsolutePath() + File.separator +
-                "Stores" + File.separator + "User Data" + File.separator +
-                "Metadata Profiles" + File.separator + "T3K Results.profile";
-        File metadataProfileFile = new File(metadataProfilePath);
-/*
-        if (!metadataProfileFile.exists()) {
-            try {
-                metadataProfileFile.createNewFile();
-            } catch (IOException e) {
-                throw new T3KApiException("Error creating the T3K Metadata Profile for this case.", e);
-            }
-        }
-*/
-        return metadataProfileFile.getAbsolutePath();
-    }
-    private Set<String> readExistingColumns(Case currentCase) {
-        String metadataProfilePath = getMetadataProfilePath(currentCase);
-        Set<String> existingColumns = new HashSet<>();
+    private Metadata getScriptedMetadata(String detection) {
+        String script = null;
 
-        if (Files.notExists(Path.of(metadataProfilePath))) {
-            return existingColumns;
-        }
+        String name = WordUtils.capitalize(StringUtils.replaceChars(detection, '_', ' '));
 
-        try {
-            DocumentBuilder profileBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            Document metadataProfile = profileBuilder.parse(metadataProfilePath);
-            metadataProfile.getDocumentElement().normalize();
-
-            NodeList metadataColumns = metadataProfile.getElementsByTagName("metadata");
-            int numberOfColumns = metadataColumns.getLength();
-
-            if (0 == numberOfColumns) {
-                return existingColumns;
-            }
-
-            for(int columnIndex = 0; columnIndex < numberOfColumns; columnIndex++) {
-                Node metadataColumn = metadataColumns.item(columnIndex);
-                NamedNodeMap metadataColumnDetails = metadataColumn.getAttributes();
-                if(null != metadataColumnDetails) {
-                    String name = metadataColumnDetails.getNamedItem("name").getNodeValue();
-                    if(null != name && !"Name".equals(name) && !"T3K Detections".equals(name) && !"T3K Detections|Count".equals(name)) {
-                        String contentValue = StringUtils.replaceChars(name, " ", "_").toLowerCase();
-                        existingColumns.add(contentValue);
-                    }
-                }
-            }
-
-            return existingColumns;
-
-        } catch (ParserConfigurationException|IOException|SAXException e) {
-            throw new T3KApiException("Error reading the T3K Metadata Profile", e);
-        }
-    }
-
-    private String buildScriptForContent(String content) {
-        String scriptedMetadata = "";
-        if ("person".equals(content.toLowerCase())) {
-            scriptedMetadata = "java_import \"com.nuix.proserv.t3k.ws.MetadataProfileBase\"\n" +
-                    "MetadataProfileBase::display_person_data $current_item.custom_metadata";
+        if ("person".equalsIgnoreCase(detection)) {
+            script = ScriptedExpression.PERSON_SCRIPT_TEMPLATE;
         } else {
-            scriptedMetadata = String.format("java_import \"com.nuix.proserv.t3k.ws.MetadataProfileBase\"\n" +
-                    "MetadataProfileBase::display_object_data $current_item.custom_metadata, \"%s\"", content);
+            script = String.format(ScriptedExpression.TYPE_SCRIPT_TEMPLATE, detection);
         }
 
-        return scriptedMetadata;
+        ScriptedExpression expression = new ScriptedExpression("ruby", script);
+        return new Metadata("SPECIAL", name, expression);
     }
 
-    private void createColumn(Document doc, Element parent, String type, String name, String width, String content) {
-        Element col = doc.createElement("metadata");
-        col.setAttribute("type", type);
-        col.setAttribute("name", name);
-        col.setAttribute("default-column-width", width);
-        parent.appendChild(col);
+    private MetadataProfile initializeMetadataProfile(MetadataProfileReaderWriter profileSource, Case currentCase) {
+        MetadataProfile metadataProfile = profileSource.readProfile(currentCase, "T3K Analysis");
 
-        if(null != content) {
-            Element scriptExpression = doc.createElement("scripted-expression");
-            col.appendChild(scriptExpression);
-            Element scriptType = doc.createElement("type");
-            scriptType.appendChild(doc.createTextNode("ruby"));
-            scriptExpression.appendChild(scriptType);
+        Set<Metadata> columns = metadataProfile.getColumns();
+        Metadata itemName = new Metadata("SPECIAL", "Name", null);
+        Metadata detectionsFound = new Metadata("CUSTOM", "T3K Detections", null);
+        Metadata detectionsCount = new Metadata("CUSTOM", "T3K Detections|Count", null);
+        columns.add(itemName);
+        columns.add(detectionsFound);
+        columns.add(detectionsCount);
 
-            Element script = doc.createElement("script");
-            script.appendChild(doc.createCDATASection(buildScriptForContent(content)));
-            scriptExpression.appendChild(script);
-        }
-    }
 
-    private void createMetadataProfile(Case currentCase, Set<String> foundData) {
-        try {
-            DocumentBuilder profileBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            Document metadataProfile = profileBuilder.newDocument();
-            Element profile = metadataProfile.createElementNS("http://nuix.com/fbi/metadata-profile", "metadata-profile");
-            metadataProfile.appendChild(profile);
-            Element metadateList = metadataProfile.createElement("metadata-list");
-            profile.appendChild(metadateList);
-
-            // Default columns
-            createColumn(metadataProfile, metadateList, "SPECIAL", "Name", "150", null);
-            createColumn(metadataProfile, metadateList, "CUSTOM", "T3K Detections", "150", null);
-            createColumn(metadataProfile, metadateList, "CUSTOM", "T3K Detections|Count", "100", null);
-
-            // Columns for each found item
-            foundData.forEach(found -> {
-                String foundName = WordUtils.capitalize(StringUtils.replaceChars(found, '_', ' '));
-                createColumn(metadataProfile, metadateList, "SPECIAL", foundName, "30", found);
-            });
-
-            String metadataProfilePath = getMetadataProfilePath(currentCase);
-            try {
-
-                DOMSource metadataProfileDOM = new DOMSource(metadataProfile);
-                Transformer transformer = TransformerFactory.newInstance().newTransformer();
-                StreamResult outputResult = new StreamResult(metadataProfilePath);
-                transformer.transform(metadataProfileDOM, outputResult);
-            } catch (TransformerException e) {
-                throw new T3KApiException("Error writing T3K Metadata Profile to disk", e);
-            }
-
-        } catch (ParserConfigurationException e) {
-            throw new T3KApiException("Error creating an XML Parser for the T3K Custom Metadata Profile.", e);
-        }
+        return metadataProfile;
     }
 
     public void processResults(BlockingQueue<AnalysisResult> results, Case currentCase) {
-        Set<String> foundDetectionTypes = readExistingColumns(currentCase);
+        MetadataProfileReaderWriter profileSource = new MetadataProfileReaderWriter();
+        MetadataProfile metadataProfile = initializeMetadataProfile(profileSource, currentCase);
 
         while(true) {
             AnalysisResult currentResult = null;
@@ -299,11 +210,11 @@ public class ScriptingBase {
 
                     currentResult.forEachDetection(detection -> {
                         if(PersonDetection.TYPE.equals(detection.getType())) {
-                            foundDetectionTypes.add("person");
+                            metadataProfile.getColumns().add(getScriptedMetadata("person"));
                         } else if (ObjectDetection.TYPE.equals(detection.getType())) {
-                            foundDetectionTypes.add(((ObjectDetection)detection).getClass_name());
+                            metadataProfile.getColumns().add(getScriptedMetadata(((ObjectDetection)detection).getClass_name()));
                         } else if (CCRDetection.TYPE.equals(detection.getType())) {
-                            foundDetectionTypes.add(((CCRDetection)detection).getInfo());
+                            metadataProfile.getColumns().add(getScriptedMetadata(((CCRDetection)detection).getInfo()));
                         }
                     });
                 }
@@ -313,7 +224,7 @@ public class ScriptingBase {
             }
         }
 
-        createMetadataProfile(currentCase, foundDetectionTypes);
+        profileSource.writeProfile(metadataProfile, currentCase, "T3K Analysis");
     }
 
     public void analyze(List<String> filesToAnalyze, BlockingQueue<AnalysisResult> completedResults,
