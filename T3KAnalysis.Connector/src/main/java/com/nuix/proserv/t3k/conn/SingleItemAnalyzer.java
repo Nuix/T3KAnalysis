@@ -20,8 +20,8 @@ public class SingleItemAnalyzer extends Analyzer<String> {
 
     private long uploadFile(long sourceId, String fileName) {
         updateAnalysisUpdated(0, 3, String.format(
-                    "[%d] %s uploading to T3K",
-                    sourceId, fileName
+                "[%d] %s uploading to T3K",
+                sourceId, fileName
         ));
 
         String pathOnServer = String.format("%s/%s", getServerSidePath(), fileName);
@@ -29,14 +29,14 @@ public class SingleItemAnalyzer extends Analyzer<String> {
 
         long resultId = getApi().upload(sourceId, pathOnServer);
 
-        if(-1L != resultId) {
+        if (-1L != resultId) {
             // item was uploaded successfully
             LOG.debug("[{}] {} uploaded correctly with id {}", sourceId, fileName, resultId);
         } else {
             LOG.error("[{}] {} uploading failed.", sourceId, fileName);
             updateAnalysisError(String.format(
-                        "[%d] %s uploading failed.",
-                        sourceId, fileName
+                    "[%d] %s uploading failed.",
+                    sourceId, fileName
             ));
         }
 
@@ -45,14 +45,14 @@ public class SingleItemAnalyzer extends Analyzer<String> {
 
     private PollResults waitForAnalysis(long sourceId, long resultId, String fileName) {
         updateAnalysisUpdated(1, 3, String.format(
-                    "[%d/%d] %s Waiting for analysis to complete.",
-                    sourceId, resultId, fileName
+                "[%d/%d] %s Waiting for analysis to complete.",
+                sourceId, resultId, fileName
         ));
 
         PollResults pollResults = getApi().waitForAnalysis(resultId);
         LOG.debug("[{}/{}] {} results of waiting: {}", sourceId, resultId, fileName, pollResults.toString());
 
-        if(!pollResults.isFinished() || pollResults.isError()) {
+        if (!pollResults.isFinished() || pollResults.isError()) {
             LOG.error("[{}/{}] {} error when processing the file: {}",
                     sourceId, resultId, fileName, pollResults);
             updateAnalysisError(String.format(
@@ -78,14 +78,14 @@ public class SingleItemAnalyzer extends Analyzer<String> {
         if (null == analysisResult) {
             LOG.error("[{}/{}] {} Analysis failed for the file.", sourceId, resultId, fileName);
             updateAnalysisError(String.format(
-                        "[%d/%d] %S.  There was an error processing the file.",
-                        sourceId, resultId, fileName
+                    "[%d/%d] %S.  There was an error processing the file.",
+                    sourceId, resultId, fileName
             ));
             updateResultError();
         } else {
             updateAnalysisUpdated(3, 3, String.format(
-                        "[%d/%d] %s analysis completed.",
-                        sourceId, resultId, fileName
+                    "[%d/%d] %s analysis completed.",
+                    sourceId, resultId, fileName
             ));
             if (0 == analysisResult.getDetectionCount()) {
                 updateResultNoMatch();
@@ -114,42 +114,32 @@ public class SingleItemAnalyzer extends Analyzer<String> {
         SourceId sourceId = getSourceId();
         long nextId = sourceId.getNextId();
 
+        LOG.info("Analyzing [{}] {}", nextId, fileName);
+        updateAnalysisStarted(String.format(
+                "[%d] %s Beginning analysis",
+                nextId, fileName
+        ));
+
+        long resultId = uploadFile(nextId, fileName);
+
+        if (-1L == resultId) {
+            return;
+        }
+
+        PollResults pollResults = waitForAnalysis(nextId, resultId, fileName);
+
+        if (!pollResults.isFinished() || pollResults.isError()) {
+            return;
+        }
+
+        AnalysisResult analysisResult = getAnalysisResults(nextId, resultId, fileName);
+
+        updateAnalysisCompleted("Analysis completed.");
+
         try {
-            LOG.info("Analyzing [{}] {}", nextId, fileName);
-            updateAnalysisStarted(String.format(
-                        "[%d] %s Beginning analysis",
-                        nextId, fileName
-            ));
-
-            long resultId = uploadFile(nextId, fileName);
-
-            if(-1L == resultId) {
-                return;
-            }
-
-            PollResults pollResults = waitForAnalysis(nextId, resultId, fileName);
-
-            if(!pollResults.isFinished() || pollResults.isError()) {
-                return;
-            }
-
-            AnalysisResult analysisResult = getAnalysisResults(nextId, resultId, fileName);
-
-            updateAnalysisCompleted("Analysis completed.");
-
-            try {
-                completedResults.put(analysisResult);
-            } catch (InterruptedException e) {
-                LOG.error("Sending the analysis results to the completed queue was interrupted.");
-            }
-
-        } finally {
-            try {
-                cacheSourceId(sourceId);
-            } catch (IOException e) {
-                LOG.error("Unable to store source id.  Next time the application runs the ids may be out of sync.");
-                LOG.error(e);
-            }
+            completedResults.put(analysisResult);
+        } catch (InterruptedException e) {
+            LOG.error("Sending the analysis results to the completed queue was interrupted.");
         }
     }
 

@@ -30,35 +30,25 @@ public class BatchAnalyzer extends Analyzer<List<String>> {
         int currentItem = 0;
         Map<Long, String> batchContents = new HashMap<>(itemCount);
 
-        try {
+        for (String itemToAnalyze : batchToAnalyze) {
+            currentItem++;
 
-            for (String itemToAnalyze : batchToAnalyze) {
-                currentItem++;
-
-                Path localPath = Path.of(itemToAnalyze);
-                if (!Files.exists(localPath)) {
-                    LOG.warn("{} does not exist, skipping file.", itemToAnalyze);
-                    continue;
-                }
-
-                long nextId = sourceId.getNextId();
-                String fileName = localPath.getFileName().toString();
-                String serverPath = String.format("%s/%s", getServerSidePath(), fileName);
-
-                batchContents.put(nextId, serverPath);
-                updateBatchUpdated(currentItem, itemCount, String.format("[%d] %s added to batch", nextId, fileName));
-                LOG.debug("[{}] {} added to batch at {}", nextId, fileName, serverPath);
+            Path localPath = Path.of(itemToAnalyze);
+            if (!Files.exists(localPath)) {
+                LOG.warn("{} does not exist, skipping file.", itemToAnalyze);
+                continue;
             }
 
-            return batchContents;
-        } finally {
-            try {
-                cacheSourceId(sourceId);
-            } catch (IOException e) {
-                LOG.error("Unable to store source id.  Next time the application runs the ids may be out of sync.");
-                LOG.error(e);
-            }
+            long nextId = sourceId.getNextId();
+            String fileName = localPath.getFileName().toString();
+            String serverPath = String.format("%s/%s", getServerSidePath(), fileName);
+
+            batchContents.put(nextId, serverPath);
+            updateBatchUpdated(currentItem, itemCount, String.format("[%d] %s added to batch", nextId, fileName));
+            LOG.debug("[{}] {} added to batch at {}", nextId, fileName, serverPath);
         }
+
+        return batchContents;
     }
 
     private BlockingQueue<Long> uploadBatch(Map<Long, String> uploadContents) {

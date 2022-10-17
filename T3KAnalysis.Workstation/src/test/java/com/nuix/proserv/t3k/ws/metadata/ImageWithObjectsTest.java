@@ -7,7 +7,9 @@ import com.nuix.proserv.t3k.results.ResultMetadata;
 import nuix.CustomMetadataMap;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -48,7 +50,7 @@ public class ImageWithObjectsTest {
     public void metadataInstanceMade() {
         AnalysisResult result = new ImageResultMock();
 
-        AnalysisMetadata metadata = AnalysisMetadata.getInstance(result, null);
+        AnalysisMetadata metadata = AnalysisMetadata.getInstance(result, new CustomMetadataMapMock());
 
         assertEquals(ImageMetadata.class, metadata.getClass());
     }

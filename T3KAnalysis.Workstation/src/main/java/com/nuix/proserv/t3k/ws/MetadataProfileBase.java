@@ -1,7 +1,6 @@
 package com.nuix.proserv.t3k.ws;
 
 import nuix.CustomMetadataMap;
-import org.apache.logging.log4j.Logger;
 
 import java.util.LinkedList;
 import java.util.List;

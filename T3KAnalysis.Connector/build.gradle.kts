@@ -51,10 +51,8 @@ dependencies {
 
     compileOnly(":nuix-scripting-api:$nuixEngineVersion")
 
-
-//    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-//    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
-
+    testImplementation("commons-io:commons-io:2.8.0")
+    testImplementation("junit:junit:4.13.2")
 }
 
 publishing {
@@ -71,4 +69,9 @@ publishing {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+tasks.test {
+    useJUnit()
+    maxHeapSize = "1G"
 }

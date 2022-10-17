@@ -30,6 +30,8 @@ public abstract class Analyzer<T> {
 
     private final T3KApi api;
 
+    private final SourceId sourceIdMaker;
+
     protected Analyzer(T3KApi api, String configPath, Configuration configuration,
                        AnalysisListener listener,
                        BatchListener batchListener,
@@ -40,6 +42,9 @@ public abstract class Analyzer<T> {
         this.analysisListener = listener;
         this.bacthListener = batchListener;
         this.resultsListener = resultsListener;
+
+        Path sourceIdPath = Path.of(configDirectory, "t3k_data_id.json");
+        this.sourceIdMaker = new SourceId(sourceIdPath.toAbsolutePath().toString());
     }
 
     public abstract void analyze(T toAnalyze, BlockingQueue<AnalysisResult> completedResults);
@@ -123,28 +128,8 @@ public abstract class Analyzer<T> {
     }
 
     protected SourceId getSourceId() {
-        Path sourceIdPath = Path.of(configDirectory, "t3k_data_id.json");
-
-        if(Files.exists(sourceIdPath)) {
-            try {
-                return new Gson().fromJson(new FileReader(sourceIdPath.toFile()), SourceId.class);
-            } catch(FileNotFoundException e) {
-                // Should be impossible since I do the check...
-                LOG.error("The source id file ({}) could not be read.", sourceIdPath);
-                return new SourceId();
-            }
-        } else {
-            return new SourceId();
-        }
+        return this.sourceIdMaker;
     }
 
-    protected void cacheSourceId(SourceId sourceId) throws IOException {
-        Path sourceIdPath = Path.of(configDirectory, "t3k_data_id.json");
-        try (FileWriter writer = new FileWriter(sourceIdPath.toFile())) {
-
-            String json = new Gson().toJson(sourceId);
-            writer.write(json);
-        }
-    }
 
 }

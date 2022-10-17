@@ -3,51 +3,132 @@ package com.nuix.proserv.t3k.ws.metadata.detections;
 import com.nuix.proserv.t3k.detections.Detection;
 import com.nuix.proserv.t3k.detections.TextDetection;
 import nuix.CustomMetadataMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
+/**
+ * Translate {@link TextDetection} into {@link CustomMetadataMap}
+ * <p>
+ *     A Text Detection comes from matching the source with predefined text.  The metadata provides information about
+ *     the search term that was matched as well as the list of matches to the search term.
+ * </p>
+ */
 public class TextMetadata extends DetectionMetadata {
-    private static final Logger LOG = LogManager.getLogger(TextMetadata.class.getCanonicalName());
 
-    private static final String T3K_TEXT = String.format(T3K_TEMPLATE, "%d", "Text Hit");
+    /**
+     * The Text hit detection custom metadata label.  This is a Format String with a single numerical field with for the
+     * detection's index.
+     */
+    private static final String T3K_TEXT = T3K_TEMPLATE + "Text Hit";
 
-    private static final String T3K_STRING = String.format("%s|%s", T3K_TEXT, "String");
+    /**
+     * This is the string the text detection matches.
+     */
+    private static final String T3K_STRING = METADATA_LEVEL_SEPARATOR + "String";
 
-    private static final String T3K_DESCRIPTION = String.format("%s|%s", T3K_TEXT, "Description");
+    /**
+     * This is the description of the string the text detection matches.
+     */
+    private static final String T3K_DESCRIPTION = METADATA_LEVEL_SEPARATOR + "Description";
 
-    private static final String T3K_LANGUAGE = String.format("%s|%s", T3K_TEXT, "Language");
+    /**
+     * This is the language of the string the text detection matches.
+     */
+    private static final String T3K_LANGUAGE = METADATA_LEVEL_SEPARATOR + "Language";
 
-    private static final String T3K_REGEX = String.format("%s|%s", T3K_TEXT, "Regex Hit");
+    /**
+     * This is if the search string that this text detection matches was a REGEX search.
+     */
+    private static final String T3K_REGEX = METADATA_LEVEL_SEPARATOR + "Regex Hit";
 
-    private static final String T3K_FUZZY = String.format("%s|%s", T3K_TEXT, "Fuzzy Hit");
+    /**
+     * This is if the search string that this detection matches was a Fuzzy search.
+     */
+    private static final String T3K_FUZZY = METADATA_LEVEL_SEPARATOR + "Fuzzy Hit";
 
-    private static final String T3K_MLR = String.format("%s|%s", T3K_TEXT, "Minimal Levenshtein Ratio");
+    /**
+     * This is the distance of the matched text to the search text (the number of character replacements needed to get
+     * from the search to the actual).  It applies to fuzzy searched.
+     */
+    private static final String T3K_MLR = METADATA_LEVEL_SEPARATOR + "Minimal Levenshtein Ratio";
 
-    private static final String T3K_MATCH = String.format("%s|%s", T3K_TEXT, "Matches");
+    /**
+     * The detection covers one or more portions of text that are found to match the defined search term.  Ultimately
+     * these will be displayed as a series below the text detection.  This is the parent to the matched list.
+     */
+    private static final String T3K_MATCH = METADATA_LEVEL_SEPARATOR + "Matches";
 
-    private static final String T3K_MATCH_TEXT = String.format("%s|%s|%s", T3K_MATCH, "%d", "Text");
+    /**
+     * The text detection will match one or more portion of the document.  This is the count of the items that
+     * were found.
+     */
+    private static final String T3K_MATCH_COUNT = T3K_MATCH + METADATA_LEVEL_SEPARATOR + "Count";
 
-    private static final String T3K_MATCH_STARTPAGE = String.format("%s|%s|%s", T3K_MATCH, "%d", "Start Page");
+    /**
+     * Each match to the search term will have a list of matches that will appear under the matches custom metadata
+     * field.  Append this to the matches label to form a Format String with a placeholder in for the index into the
+     * list for a match.
+     */
+    private static final String T3K_MATCH_INDEX = T3K_MATCH + METADATA_LEVEL_SEPARATOR + "%d" + METADATA_LEVEL_SEPARATOR;
 
-    private static final String T3K_MATCH_ENDPAGE = String.format("%s|%s|%s", T3K_MATCH, "%d", "End Page");
+    /**
+     * Each match to the search term will have the text in the document that was found to match the search term.
+     */
+    private static final String T3K_MATCH_TEXT = "Text";
 
-    private static final String T3K_MATCH_STARTCHAR = String.format("%s|%s|%s", T3K_MATCH, "%d", "Start Character");
+    /**
+     * Each match to the search term will define the page where the beginning of the matched text was found.
+     */
+    private static final String T3K_MATCH_STARTPAGE = "Start Page";
 
-    private static final String T3K_MATCH_ENDCHAR = String.format("%s|%s|%s", T3K_MATCH, "%d", "End Character");
+    /**
+     * Each match to the search term will define the page where the end of the matched text was found.
+     */
+    private static final String T3K_MATCH_ENDPAGE = "End Page";
 
-    private static final String T3K_MATCH_STARTPOS = String.format("%s|%s|%s", T3K_MATCH, "%d", "Start Position");
+    /**
+     * Each match to the search term will define the character on the page where the matched text started.
+     */
+    private static final String T3K_MATCH_STARTCHAR = "Start Character";
 
-    private static final String T3K_MATCH_ENDPOS = String.format("%s|%s|%s", T3K_MATCH, "%d", "End Position");
+    /**
+     * Each match to the search term will define the character on the page where the matched text ended.
+     */
+    private static final String T3K_MATCH_ENDCHAR = "End Character";
 
+    /**
+     * Each match to the search tem will define the fraction (as character of the start / total characters on page) of
+     * the page's content where the text started.
+     */
+    private static final String T3K_MATCH_STARTPOS = "Start Position";
+
+    /**
+     * Each match to the search tem will define the fraction (as character of the end / total characters on page) of
+     * the page's content where the text ended.
+     */
+    private static final String T3K_MATCH_ENDPOS = "End Position";
+
+    /**
+     * Create a new TextMetadata object with the {@link CustomMetadataMap} used to store data.
+     * @param map The {@link CustomMetadataMap} to store data in
+     */
     protected TextMetadata(CustomMetadataMap map) {
         super(map);
     }
 
+    /**
+     * {@inheritDoc}
+     * @param detection The {@link Detection} to generate a custom metadata label for.
+     * @return A Format String for the Text Hit with a placeholder for this detection's index.
+     */
     @Override
     public String getTypeTemplate(Detection detection) {
         return T3K_TEXT;
     }
 
+    /**
+     * {@inheritDoc}
+     * @param detection The {@link Detection} with the data to add to the custom metadata
+     * @param detectionIndex The index in the detections list for this detection
+     */
     @Override
     public void applyDetection(Detection detection, int detectionIndex) {
         if(! (detection instanceof TextDetection)) {
@@ -56,24 +137,28 @@ public class TextMetadata extends DetectionMetadata {
         }
 
         TextDetection text = (TextDetection) detection;
-        getMetadataMap().putText(String.format(T3K_STRING, detectionIndex), text.getString());
-        getMetadataMap().putText(String.format(T3K_LANGUAGE, detectionIndex), text.getLanguage());
-        getMetadataMap().putText(String.format(T3K_DESCRIPTION, detectionIndex), text.getDescription());
-        getMetadataMap().putBoolean(String.format(T3K_REGEX, detectionIndex), text.isRegex());
-        getMetadataMap().putBoolean(String.format(T3K_FUZZY, detectionIndex), text.isFuzzy());
-        getMetadataMap().putFloat(String.format(T3K_MLR, detectionIndex), text.getMinimal_levenshtein_ratio());
+        String baseLabel = String.format(T3K_TEXT, detectionIndex);
+        getMetadataMap().putText(baseLabel + T3K_STRING, text.getString());
+        getMetadataMap().putText(baseLabel + T3K_LANGUAGE, text.getLanguage());
+        getMetadataMap().putText(baseLabel + T3K_DESCRIPTION, text.getDescription());
+        getMetadataMap().putBoolean(baseLabel + T3K_REGEX, text.isRegex());
+        getMetadataMap().putBoolean(baseLabel + T3K_FUZZY, text.isFuzzy());
+        getMetadataMap().putFloat(baseLabel + T3K_MLR, text.getMinimal_levenshtein_ratio());
+
+        getMetadataMap().putInteger(baseLabel + T3K_MATCH_COUNT, text.getMatchesCount());
 
         int[] matchIndex = { 0 };
         text.forEachMatch(textMatch -> {
             matchIndex[0] = matchIndex[0] + 1;
 
-            getMetadataMap().putText(String.format(T3K_MATCH_TEXT, detectionIndex, matchIndex[0]), textMatch.getMatchedText());
-            getMetadataMap().putInteger(String.format(T3K_MATCH_STARTPAGE, detectionIndex, matchIndex[0]), textMatch.getStartPage());
-            getMetadataMap().putInteger(String.format(T3K_MATCH_STARTCHAR, detectionIndex, matchIndex[0]), textMatch.getStartCharacter());
-            getMetadataMap().putFloat(String.format(T3K_MATCH_STARTPOS, detectionIndex, matchIndex[0]), textMatch.getStartCharacterPosition());
-            getMetadataMap().putInteger(String.format(T3K_MATCH_ENDPAGE, detectionIndex, matchIndex[0]), textMatch.getEndPage());
-            getMetadataMap().putInteger(String.format(T3K_MATCH_ENDCHAR, detectionIndex, matchIndex[0]), textMatch.getEndCharacter());
-            getMetadataMap().putInteger(String.format(T3K_MATCH_ENDPOS, detectionIndex, matchIndex[0]), textMatch.getEndCharacterPosition());
+            String matchBaseLabel = String.format(baseLabel + T3K_MATCH_INDEX, matchIndex[0]);
+            getMetadataMap().putText(matchBaseLabel + T3K_MATCH_TEXT, textMatch.getMatchedText());
+            getMetadataMap().putInteger(matchBaseLabel + T3K_MATCH_STARTPAGE, textMatch.getStartPage());
+            getMetadataMap().putInteger(matchBaseLabel + T3K_MATCH_STARTCHAR, textMatch.getStartCharacter());
+            getMetadataMap().putFloat(matchBaseLabel + T3K_MATCH_STARTPOS, textMatch.getStartCharacterPosition());
+            getMetadataMap().putInteger(matchBaseLabel + T3K_MATCH_ENDPAGE, textMatch.getEndPage());
+            getMetadataMap().putInteger(matchBaseLabel + T3K_MATCH_ENDCHAR, textMatch.getEndCharacter());
+            getMetadataMap().putInteger(matchBaseLabel + T3K_MATCH_ENDPOS, textMatch.getEndCharacterPosition());
 
         });
     }

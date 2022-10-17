@@ -27,7 +27,7 @@ public class MetadataProfileTests {
         assertNotNull(mdp.getColumns());
         assertEquals(3, mdp.getColumns().size());
         Metadata column = mdp.getColumns().stream().findFirst().get();
-        assertEquals("SPECIAL", column.getType());
+        assertEquals(MetadataType.SPECIAL, column.getType());
         assertEquals("Name", column.getName());
     }
 
@@ -39,9 +39,9 @@ public class MetadataProfileTests {
     public void BasicProfileWrite() {
         MetadataProfile mdp = new MetadataProfile();
         Set<Metadata> columns = mdp.getColumns();
-        Metadata column = new Metadata("SPECIAL", "Name", null);
-        Metadata column2 = new Metadata("CUSTOM", "T3K Detections", null);
-        Metadata column3 = new Metadata("CUSTOM", "T3K Detections|Count", null);
+        Metadata column = new Metadata(MetadataType.SPECIAL, "Name", null);
+        Metadata column2 = new Metadata(MetadataType.CUSTOM, "T3K Detections", null);
+        Metadata column3 = new Metadata(MetadataType.CUSTOM, "T3K Detections|Count", null);
         columns.add(column);
         columns.add(column2);
         columns.add(column3);
@@ -73,11 +73,11 @@ public class MetadataProfileTests {
             assertNotNull(mdp.getColumns());
             assertEquals(1, mdp.getColumns().size());
             Metadata column = mdp.getColumns().stream().findFirst().get();
-            assertEquals("SPECIAL", column.getType());
+            assertEquals(MetadataType.SPECIAL, column.getType());
             assertEquals("Army Tank", column.getName());
             ScriptedExpression expression = column.getScriptedExpression();
             assertNotNull(expression);
-            assertEquals("ruby", expression.getType());
+            assertEquals(ScriptType.ruby, expression.getType());
             assertEquals("java_import \"com.nuix.proserv.t3k.ws.MetadataProfileBase\"\n" +
                     "MetadataProfileBase::display_object_data $current_item.custom_metadata, \"army_tank\"",
                     expression.getScript());
@@ -89,13 +89,13 @@ public class MetadataProfileTests {
 
         MetadataProfile mdp = new MetadataProfile();
         Set<Metadata> columns = mdp.getColumns();
-        ScriptedExpression expression = new ScriptedExpression("ruby",
+        ScriptedExpression expression = new ScriptedExpression(ScriptType.ruby,
                 "java_import \"com.nuix.proserv.t3k.ws.MetadataProfileBase\"\n" +
                 "MetadataProfileBase::display_object_data $current_item.custom_metadata, \"army_tank\"");
 
         System.out.println(expression);
 
-        Metadata column = new Metadata("SPECIAL", "Army Tank", expression);
+        Metadata column = new Metadata(MetadataType.SPECIAL, "Army Tank", expression);
         columns.add(column);
 
         MetadataProfileReaderWriter profileSource = new MetadataProfileReaderWriter() {

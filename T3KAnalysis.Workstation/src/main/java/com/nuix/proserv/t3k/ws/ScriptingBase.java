@@ -9,10 +9,8 @@ import com.nuix.proserv.t3k.detections.ObjectDetection;
 import com.nuix.proserv.t3k.detections.PersonDetection;
 import com.nuix.proserv.t3k.results.AnalysisResult;
 import com.nuix.proserv.t3k.ws.metadata.AnalysisMetadata;
-import com.nuix.proserv.t3k.ws.metadataprofile.Metadata;
+import com.nuix.proserv.t3k.ws.metadataprofile.*;
 import com.nuix.proserv.t3k.ws.metadataprofile.MetadataProfile;
-import com.nuix.proserv.t3k.ws.metadataprofile.MetadataProfileReaderWriter;
-import com.nuix.proserv.t3k.ws.metadataprofile.ScriptedExpression;
 import lombok.Getter;
 import nuix.*;
 
@@ -160,8 +158,11 @@ public class ScriptingBase {
     /**
      * Creates a new instance of the ScriptingBase class with the path to the application configuration file.
      * @param pathToConfig The full path the JSON file with the application's configuration
+     * @throws IllegalArgumentException if pathToConfig is null
      */
     public ScriptingBase(String pathToConfig) {
+        if (null == pathToConfig) throw new IllegalArgumentException("The path to the configuration file must not be null.");
+
         this.pathToConfig = pathToConfig;
 
         this.app = new Application(pathToConfig);
@@ -200,6 +201,7 @@ public class ScriptingBase {
      * @param utilities The nuix.Utilities instance to get a BinaryExporter from.
      * @param listener The ProgressListener that will be informed of each file being exported.
      * @return A java.util.List containing the full paths of the files that were exported to.
+     * @throws IllegalStateException if the utilities object is null.
      */
     public List<String> exportItems(List<Item> itemsToExport, Utilities utilities, ProgressListener listener) {
         LOG.trace("Exporting items: itemsToExport");
@@ -260,8 +262,8 @@ public class ScriptingBase {
             script = String.format(ScriptedExpression.TYPE_SCRIPT_TEMPLATE, detection);
         }
 
-        ScriptedExpression expression = new ScriptedExpression("ruby", script);
-        return new Metadata("SPECIAL", name, expression);
+        ScriptedExpression expression = new ScriptedExpression(ScriptType.ruby, script);
+        return new Metadata(MetadataType.SPECIAL, name, expression);
     }
 
     /**
@@ -274,9 +276,9 @@ public class ScriptingBase {
         MetadataProfile metadataProfile = profileSource.readProfile(currentCase, "T3K Analysis");
 
         Set<Metadata> columns = metadataProfile.getColumns();
-        Metadata itemName = new Metadata("SPECIAL", "Name", null);
-        Metadata detectionsFound = new Metadata("CUSTOM", "T3K Detections", null);
-        Metadata detectionsCount = new Metadata("CUSTOM", "T3K Detections|Count", null);
+        Metadata itemName = new Metadata(MetadataType.SPECIAL, "Name", null);
+        Metadata detectionsFound = new Metadata(MetadataType.CUSTOM, "T3K Detections", null);
+        Metadata detectionsCount = new Metadata(MetadataType.CUSTOM, "T3K Detections|Count", null);
         columns.add(itemName);
         columns.add(detectionsFound);
         columns.add(detectionsCount);

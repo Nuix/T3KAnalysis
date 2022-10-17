@@ -9,7 +9,7 @@
  * </p>
  * <ol>
  *     <li>Subclass {@link com.nuix.proserv.t3k.ws.metadata.AnalysisMetadata}</li>
- *     <li>Implment the {@link com.nuix.proserv.t3k.ws.metadata.AnalysisMetadata#applyDetection(com.nuix.proserv.t3k.detections.Detection)} method</li>
+ *     <li>Implement the {@link com.nuix.proserv.t3k.ws.metadata.AnalysisMetadata#addDetection(com.nuix.proserv.t3k.detections.Detection)} method</li>
  *     <li>If the new type provides data for the detection (like page number or frame id) then apply the data store in the result to the metadasta</li>
  *     <li>Register the new AnalysisMetadata to the {@link com.nuix.proserv.t3k.ws.metadata.AnalysisMetadata#ANALYSIS_METADATA_TYPES} map by mapping the AnalysisResult implementation to the new metadata class</li>
  * </ol>
