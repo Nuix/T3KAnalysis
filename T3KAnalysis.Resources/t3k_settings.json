@@ -1,0 +1,14 @@
+{
+  "t3k_server_url": "http://127.0.0.1",
+  "t3k_server_port": 5000,
+  "t3k_server_path": "/CORE/resources/data",
+  "nuix_output_path": "C:\\Data\\processing",
+  "nuix_batch_size": 10,
+  "nuix_retry_count": 50,
+  "nuix_retry_delay_seconds": 5,
+  "Nuix Worker Settings": {
+    "workerCount": 2,
+    "workerTemp": "C:\\WorkerTemp",
+    "workerMemory": 1024
+  }
+}

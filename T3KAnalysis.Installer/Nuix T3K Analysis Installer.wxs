@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?define CompanyName="Nuix Pty Ltd" ?>
+<?define CompanyShortName="Nuix" ?>
+<?define TargetNuixVersion="9.10" ?>
+<?define ProductName="Nuix T3K Analysis" ?>
+<?define ProductVersion="1.0.0" ?>
+<?define ConnectorVersion="1.0.5-SNAPSHOT" ?>
+<?define APIVersion="1.0.6-SNAPSHOT" ?>
+<?define WorkstationVersion="1.0.3-SNAPSHOT" ?>
+<?define ToolboxVersion="1.0.2-SNAPSHOT" ?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<!--
+   *****
+   * Commands to build the installer
+   *****
+     *** Add the Wix Toolset to your environment path if not already there. ***
+     $Env:Path = "C:\Program Files (x86)\WiX Toolset v3.11\bin;$ENV:Path"
+
+     *** Use heat to build fragments of the various projects.  Only need to use this when those projects change. ***
+     *** This project does not use any heat commands to collect - few enough files to run by hand.
+     heat dir ... -cg ...  -gg -g1 -dr ... -sfrag -srd -template fragment -var ... -out scripts.wxs
+
+     *** Build the MSI ***
+     candle.exe -arch x64 "Nuix T3K Analysis Installer.wxs" "application.wxs" "data.wxs" "help.wxs" "scripts.wxs"
+     light.exe -ext WixUIExtension -o "Nuix T3K Analysis Installer.msi" "Nuix T3K Analysis Installer.wixobj" "application.wixobj" "data.wixobj" "help.wixobj" "scripts.wixobj"
+-->
+<Product Id="BC4025F1-FEE8-49B1-B764-193CF7C1B48A"
+         Name="$(var.ProductName)"
+         Language="1033"
+         Version="$(var.ProductVersion)"
+         Manufacturer="$(var.CompanyName)"
+         UpgradeCode="93E74594-6073-4F5F-B1F5-D5AFFF51A9B2">
+    <Package Id="*"
+             Keywords="Nuix, T3K, Image, Video, Analysis"
+             Comments="Connect to a T3K CORE server to enrich your content in Nuix."
+             InstallerVersion="200"
+             Compressed="yes"
+             Languages="1033"/>
+    <Media Id="1"
+           Cabinet="media1.cab"
+           EmbedCab="yes"/>
+    <Directory Id="TARGETDIR"
+               Name="SourceDir">
+        <Directory Id="ProgramFiles64Folder">
+            <Directory Id="NuixDir"
+                       Name="$(var.CompanyShortName)">
+                <Directory Id="WorkstationDir"
+                           Name="$(var.CompanyShortName) $(var.TargetNuixVersion)">
+                    <Directory Id="NUIXLIB"
+                               Name="lib"/>
+                </Directory>
+            </Directory>
+        </Directory>
+        <Directory Id="CommonAppDataFolder">
+            <Directory Id="NuixAppDataDir"
+                       Name="$(var.CompanyShortName)">
+                <Directory Id="DATADIR"
+                           Name="$(var.ProductName)"/>
+                <Directory Id="ScriptsDir"
+                           Name="Scripts">
+                    <Directory Id="SCRIPTINSTALLDIR"
+                               Name="$(var.ProductName)"/>
+                </Directory>
+            </Directory>
+        </Directory>
+    </Directory>
+    <Feature Id="Complete"
+             Title="$(var.ProductName) Plugin"
+             Level="1"
+             Description="The Nuix connection to T3K CORE servers with all of its components."
+             Display="expand"
+             AllowAdvertise="no"
+             InstallDefault="local"
+             Absent="allow">
+        <Feature Id="ConnectionLibraries"
+                 Title="Connection Libraries for T3K Analysis"
+                 Level="1"
+                 Description="The Java libraries needed to connect to T3K CORE.  this includes the APIs and its dependencies and must be installed to the Nuix Classpath - usually in the lib subdirectory of your Nuix Workstation installation."
+                 ConfigurableDirectory="NUIXLIB"
+                 AllowAdvertise="no"
+                 InstallDefault="followParent"
+                 Absent="allow">
+            <ComponentGroupRef Id="APPLICATION" />
+        </Feature>
+        <Feature Id="ApplicationDataFeature"
+                 Title="T3K Analysis application data"
+                 Level="1"
+                 Description="Data files for configuring the application.  The files are placeholders to ensure the install path gets created.  Actual data will be written when the application is configured for the first time."
+                 AllowAdvertise="no"
+                 InstallDefault="followParent"
+                 Absent="allow">
+            <ComponentGroupRef Id="DATAPLACEHOLDER"/>
+        </Feature>
+        <Feature Id="ScriptsFeature"
+                 Title="T3K Analysis Workstation Scripts"
+                 Level="1"
+                 Description="These are the scripts used by Nuix Workstation to call and get results for T3K Analysis.  They install into the shared scripts store by default but can be configured to be installed into a User or Case store if desired."
+                 ConfigurableDirectory="SCRIPTINSTALLDIR"
+                 AllowAdvertise="no"
+                 InstallDefault="followParent"
+                 Absent="allow">
+            <ComponentGroupRef Id="SCRIPTS"/>
+        </Feature>
+        <Feature Id="HelpFeature"
+                 Title="T3K Analysis Help Contents"
+                 Level="1"
+                 Description="The help manual for the Nuix T3K Analysis plugin."
+                 AllowAdvertise="no"
+                 InstallDefault="followParent"
+                 Absent="allow">
+            <ComponentGroupRef Id="HELP"/>
+        </Feature>
+    </Feature>
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf"/>
+    <WixVariable Id="WixUIBannerBmp" Value="Installer Banner.bmp"/>
+    <WixVariable Id="WixUIDialogBmp" Value="Installer Field.bmp"/>
+    <UIRef Id="WixUI_FeatureTree"/>
+    <UIRef Id="WixUI_ErrorProgressText"/>
+</Product>
+</Wix>

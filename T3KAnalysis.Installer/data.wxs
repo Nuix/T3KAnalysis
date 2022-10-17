@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?define DataSource="..\T3KAnalysis.Resources" ?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+    <Fragment>
+        <DirectoryRef Id="DATADIR">
+            <Component Id="CounterData"
+                       Guid="DE465C15-1820-425E-A5E7-40619372417D">
+                <File Id="CounterJson"
+                      KeyPath="yes"
+                      Source="$(var.DataSource)\t3k_data_id.json">
+                    <util:PermissionEx User="Users"
+                                       GenericAll="yes" />
+                </File>
+            </Component>
+            <Component Id="SettingsData"
+                       Guid="6FC40D43-F33D-4EE4-A6D9-047563C96467">
+                <File Id="SettingsJson"
+                      KeyPath="yes"
+                      Source="$(var.DataSource)\t3k_settings.json">
+                    <util:PermissionEx User="Users"
+                                       GenericAll="yes" />
+                </File>
+            </Component>
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="DATAPLACEHOLDER">
+            <ComponentRef Id="CounterData"/>
+            <ComponentRef Id="SettingsData"/>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

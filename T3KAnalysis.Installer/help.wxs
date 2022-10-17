@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?define HelpSource="..\T3KAnalysis.Help" ?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="ScriptHelpDir">
+            <Component Id="cmp_mainhelp"
+                       Guid="51EFE18B-9A52-439D-B53C-A0EDC8035BF5">
+                <File Id="mainhelp_html"
+                      KeyPath="yes"
+                      Source="$(var.HelpSource)\T3K Analysis Help.html"/>
+            </Component>
+            <Directory Id="HelpResourcesDir"
+                       Name="resources">
+                <Component Id="cmp_01GFKRXXCABPNKE38SBCRDHZVA"
+                           Guid="B4B73B93-8DD2-4FCD-B6F9-87E9D4E6036D">
+                    <File Id="file_01GFKRXXCABPNKE38SBCRDHZVA"
+                          KeyPath="yes"
+                          Source="$(var.HelpSource)\resources\Nuix_Logo_V2_Color.svg"/>
+                </Component>
+            </Directory>
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="HELP">
+            <ComponentRef Id="cmp_mainhelp"/>
+            <ComponentRef Id="cmp_01GFKRXXCABPNKE38SBCRDHZVA"/>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

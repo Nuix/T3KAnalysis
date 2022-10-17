@@ -7,3 +7,4 @@ gradlew.bat
 t3k_data_id.json
 T3KAnalysis.Workstation/output.profile
 T3KAnalysis.Workstation/scripted_output.profile
+*.wixobj

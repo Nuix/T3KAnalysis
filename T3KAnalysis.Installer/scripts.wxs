@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?define ScriptSource="..\T3KAnalysis.Scripts" ?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <!--
+      Add in the structure of the scripts files that will be copied
+      to ProgramData\Nuix\Scripts.  Note, the directory id for Help
+      should be copied from here to the Help wxs file as the
+      DirectoryRef
+    -->
+    <Fragment>
+        <DirectoryRef Id="SCRIPTINSTALLDIR">
+            <Directory Id="AnalysisDir"
+                       Name="1 - T3KAnalysis.nuixscript">
+                <Component Id="cmp_t3kanalysis_iconlarge"
+                           Guid="B6D826FE-1292-474E-8806-E526333A361E">
+                    <File Id="t3kanalysis_iconlarge_png"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\1 - T3KAnalysis.nuixscript\icon_large.png"/>
+                </Component>
+                <Component Id="cmp_t3kanalysis_iconsmall"
+                           Guid="8873F270-688A-4C28-AEAD-104A0870BAFD">
+                    <File Id="t3kanalysis_iconsmall_png"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\1 - T3KAnalysis.nuixscript\icon_small.png"/>
+                </Component>
+                <Component Id="cmp_t3kanalysis_metadataprops"
+                           Guid="4D018C6F-6DFE-49EF-8539-37609BD751E5">
+                    <File Id="t3kanalysis_metadataprops"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\1 - T3KAnalysis.nuixscript\metadata.properties"/>
+                </Component>
+                <Component Id="cmp_t3kanalysis_mainscript"
+                           Guid="57EC0548-71A0-4669-BD44-A88843D903D9">
+                    <File Id="t3kanalysis_mainscript_rb"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\1 - T3KAnalysis.nuixscript\nuix_t3k_analysis.rb"/>
+                </Component>
+                <Directory Id="AnalysisUiDir"
+                           Name="ui">
+                    <Component Id="cmp_t3kanalysis_ui_mainscreen"
+                               Guid="77887245-C58D-4E4E-99D4-8A3F2217DF94">
+                        <File Id="t3kanalysis_ui_mainscreen_rb"
+                              KeyPath="yes"
+                              Source="$(var.ScriptSource)\1 - T3KAnalysis.nuixscript\ui\processing_screen.rb"/>
+                    </Component>
+                </Directory>
+            </Directory>
+            <Directory Id="ConfigureDir"
+                       Name="2 - T3KSettings.nuixscript">
+                <Component Id="cmp_t3ksettings_iconlarge"
+                           Guid="17D4130E-C31C-404A-9D98-E7B07F07A8A5">
+                    <File Id="t3ksettings_iconlarge_png"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\2 - T3KSettings.nuixscript\icon_large.png"/>
+                </Component>
+                <Component Id="cmp_t3ksettings_iconsmall"
+                           Guid="44A273CE-74F1-4316-9E71-6129DF757317">
+                    <File Id="t3ksettings_iconsmall_png"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\2 - T3KSettings.nuixscript\icon_small.png"/>
+                </Component>
+                <Component Id="cmp_t3ksettings_metadataprops"
+                           Guid="32A5521E-914C-4E9C-A2BB-B6622B79812F">
+                    <File Id="t3ksettings_metadataprops"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\2 - T3KSettings.nuixscript\metadata.properties"/>
+                </Component>
+                <Component Id="cmp_t3ksettins_mainscript"
+                           Guid="CDA26342-D118-40B7-A514-76ADE7E7F71E">
+                    <File Id="t3ksetting_mainscript_rb"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\2 - T3KSettings.nuixscript\t3k_configuration.rb"/>
+                </Component>
+                <Directory Id="SettingsUiDir"
+                           Name="ui">
+                    <Component Id="cmp_t3ksettings_ui_mainscreen"
+                               Guid="59ECB657-3EC6-4746-8F6E-3E881AE13714">
+                        <File Id="t3ksettings_ui_mainscreen_rb"
+                              KeyPath="yes"
+                              Source="$(var.ScriptSource)\2 - T3KSettings.nuixscript\ui\settings_screen.rb"/>
+                    </Component>
+                </Directory>
+            </Directory>
+            <Directory Id="ScriptHelpDir"
+                       Name="3 - T3KHelp.nuixscript">
+                <Component Id="cmp_t3khelp_iconlarge"
+                           Guid="3EB501A3-5C97-4BF9-9DA8-FD51B3454432">
+                    <File Id="t3khelp_iconlarge_png"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\3 - T3KHelp.nuixscript\icon_large.png"/>
+                </Component>
+                <Component Id="cmp_t3khelp_iconsmall"
+                           Guid="EDAB6629-514E-49FE-830C-A4F024F56E2A">
+                    <File Id="t3khelp_iconsmall_png"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\3 - T3KHelp.nuixscript\icon_small.png"/>
+                </Component>
+                <Component Id="cmp_t3khelp_metadataprops"
+                           Guid="9F441F89-7E22-437B-8732-FB811BB910F1">
+                    <File Id="t3khelp_metadata_properties"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\3 - T3KHelp.nuixscript\metadata.properties"/>
+                </Component>
+                <Component Id="cmp_t3khelp_mainscript"
+                           Guid="0ED6D42B-2E08-45E5-AD37-BADBF88ABDD3">
+                    <File Id="t3khelp_mainscript_rb"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\3 - T3KHelp.nuixscript\Launch Help.rb"/>
+                </Component>
+            </Directory>
+            <Directory Id="ScriptLibDir"
+                       Name="libs.nuixscript">
+                <Component Id="cmp_nx_lib"
+                           Guid="A993E260-C72B-4559-8F5D-7E7ED88A9FFB">
+                    <File Id="nx_lib_jar"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\libs.nuixscript\NX.jar"/>
+                </Component>
+                <Component Id="cmp_nxbootstrap"
+                           Guid="17DCB6AB-9422-4E5B-93E2-4E1AEB7045C7">
+                    <File Id="nxbootstrap_rb"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\libs.nuixscript\NxBootstrap.rb"/>
+                </Component>
+                <Component Id="cmp_t3kwss"
+                           Guid="56E5B1DC-D2D0-45A3-8602-DC1106A6A0C6">
+                    <File Id="t3kwss_rb"
+                          KeyPath="yes"
+                          Source="$(var.ScriptSource)\libs.nuixscript\nuix_t3k_worker_script.rb"/>
+                </Component>
+            </Directory>
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="SCRIPTS">
+            <ComponentRef Id="cmp_t3kanalysis_iconlarge"/>
+            <ComponentRef Id="cmp_t3kanalysis_iconsmall"/>
+            <ComponentRef Id="cmp_t3kanalysis_metadataprops"/>
+            <ComponentRef Id="cmp_t3kanalysis_mainscript"/>
+            <ComponentRef Id="cmp_t3kanalysis_ui_mainscreen"/>
+            <ComponentRef Id="cmp_t3ksettings_iconlarge"/>
+            <ComponentRef Id="cmp_t3ksettings_iconsmall"/>
+            <ComponentRef Id="cmp_t3ksettings_metadataprops"/>
+            <ComponentRef Id="cmp_t3ksettins_mainscript"/>
+            <ComponentRef Id="cmp_t3ksettings_ui_mainscreen"/>
+            <ComponentRef Id="cmp_t3khelp_iconlarge"/>
+            <ComponentRef Id="cmp_t3khelp_iconsmall"/>
+            <ComponentRef Id="cmp_t3khelp_metadataprops"/>
+            <ComponentRef Id="cmp_t3khelp_mainscript"/>
+            <ComponentRef Id="cmp_nx_lib"/>
+            <ComponentRef Id="cmp_nxbootstrap"/>
+            <ComponentRef Id="cmp_t3kwss"/>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

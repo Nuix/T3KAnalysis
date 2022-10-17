@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?define APISource="..\T3KAnalysis\build\libs" ?>
+<?define APIVersion="1.0.6-SNAPSHOT" ?>
+<?define ConnectorSource="..\T3KAnalysis.Connector\build\libs" ?>
+<?define ConnectorVersion="1.0.5-SNAPSHOT" ?>
+<?define ApplicationSource="..\T3KAnalysis.Workstation\build\libs" ?>
+<?define ApplicationVersion="1.0.3-SNAPSHOT" ?>
+<?define LibsSource="..\T3KAnalysis.Libs" ?>
+<?define RestClientVersion="1.0.3-SNAPSHOT" ?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="NUIXLIB">
+            <Component Id="APILib"
+                       Guid="E6A266A3-3229-469F-9A51-2567FFF83F33">
+                <File Id="APIJar"
+                      KeyPath="yes"
+                      Source="$(var.APISource)\T3KAnalysis-$(var.APIVersion).jar"/>
+            </Component>
+            <Component Id="ConnectorLib"
+                       Guid="15AE7F73-81D7-4211-A0EB-8C7A04D4F1A6">
+                <File Id="ConnectorJar"
+                      KeyPath="yes"
+                      Source="$(var.ConnectorSource)\T3KAnalysis.Connector-$(var.ConnectorVersion).jar"/>
+            </Component>
+            <Component Id="ApplicationLib"
+                       Guid="3A65F339-AD1A-4D1E-988F-54300EDEA12D">
+                <File Id="ApplicationJar"
+                      KeyPath="yes"
+                      Source="$(var.ApplicationSource)\T3KAnalysis.Workstation-$(var.ApplicationVersion).jar"/>
+            </Component>
+            <Component Id="RestClientLib"
+                       Guid="D9A346AF-3CEC-4C36-B56F-FE152734362E">
+                <File Id="RestClientJar"
+                      KeyPath="yes"
+                      Source="$(var.LibsSource)\JavaRESTClient-$(var.RestClientVersion).jar"/>
+            </Component>
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="APPLICATION">
+            <ComponentRef Id="APILib"/>
+            <ComponentRef Id="ConnectorLib"/>
+            <ComponentRef Id="ApplicationLib"/>
+            <ComponentRef Id="RestClientLib"/>
+        </ComponentGroup>
+    </Fragment>
+</Wix>
