@@ -22,8 +22,8 @@
      heat dir ... -cg ...  -gg -g1 -dr ... -sfrag -srd -template fragment -var ... -out scripts.wxs
 
      *** Build the MSI ***
-     candle.exe -arch x64 "Nuix T3K Analysis Installer.wxs" "application.wxs" "data.wxs" "help.wxs" "scripts.wxs"
-     light.exe -ext WixUIExtension -o "Nuix T3K Analysis Installer.msi" "Nuix T3K Analysis Installer.wixobj" "application.wixobj" "data.wixobj" "help.wixobj" "scripts.wixobj"
+     candle.exe -ext WixUtilExtension -arch x64 "Nuix T3K Analysis Installer.wxs" "application.wxs" "data.wxs" "help.wxs" "scripts.wxs"
+     light.exe -ext WixUIExtension -ext WixUtilExtension -o "Nuix T3K Analysis Installer.msi" "Nuix T3K Analysis Installer.wixobj" "application.wixobj" "data.wixobj" "help.wixobj" "scripts.wixobj"
 -->
 <Product Id="BC4025F1-FEE8-49B1-B764-193CF7C1B48A"
          Name="$(var.ProductName)"
