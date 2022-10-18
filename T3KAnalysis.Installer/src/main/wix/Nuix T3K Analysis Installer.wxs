@@ -22,8 +22,8 @@
      heat dir ... -cg ...  -gg -g1 -dr ... -sfrag -srd -template fragment -var ... -out scripts.wxs
 
      *** Build the MSI ***
-     candle.exe -ext WixUtilExtension -arch x64 "Nuix T3K Analysis Installer.wxs" "application.wxs" "data.wxs" "help.wxs" "scripts.wxs"
-     light.exe -ext WixUIExtension -ext WixUtilExtension -o "Nuix T3K Analysis Installer.msi" "Nuix T3K Analysis Installer.wixobj" "application.wixobj" "data.wixobj" "help.wixobj" "scripts.wixobj"
+     candle.exe -ext WixUtilExtension -arch x64 -o build\classes\ "src\main\wix\Nuix T3K Analysis Installer.wxs" "src\main\wix\application.wxs" "src\main\wix\data.wxs" "src\main\wix\help.wxs" "src\main\wix\scripts.wxs"
+     light.exe -ext WixUIExtension -ext WixUtilExtension -pdbout "build\pdbs\Nuix T3K Analysis Installer.wixpdb" -o "build\installer\Nuix T3K Analysis Installer.msi" "build\classes\Nuix T3K Analysis Installer.wixobj" "build\classes\application.wixobj" "build\classes\data.wixobj" "build\classes\help.wixobj" "build\classes\scripts.wixobj"
 -->
 <Product Id="BC4025F1-FEE8-49B1-B764-193CF7C1B48A"
          Name="$(var.ProductName)"
@@ -112,9 +112,9 @@
             <ComponentGroupRef Id="HELP"/>
         </Feature>
     </Feature>
-    <WixVariable Id="WixUILicenseRtf" Value="License.rtf"/>
-    <WixVariable Id="WixUIBannerBmp" Value="Installer Banner.bmp"/>
-    <WixVariable Id="WixUIDialogBmp" Value="Installer Field.bmp"/>
+    <WixVariable Id="WixUILicenseRtf" Value="src\main\resources\License.rtf"/>
+    <WixVariable Id="WixUIBannerBmp" Value="src\main\resources\Installer Banner.bmp"/>
+    <WixVariable Id="WixUIDialogBmp" Value="src\main\resources\Installer Field.bmp"/>
     <UIRef Id="WixUI_FeatureTree"/>
     <UIRef Id="WixUI_ErrorProgressText"/>
 </Product>
