@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?define APISource="..\T3KAnalysis\build\libs" ?>
+<?define APISource="..\T3KAnalysis.API\build\libs" ?>
 <?define APIVersion="1.0.6-SNAPSHOT" ?>
 <?define ConnectorSource="..\T3KAnalysis.Connector\build\libs" ?>
 <?define ConnectorVersion="1.0.5-SNAPSHOT" ?>

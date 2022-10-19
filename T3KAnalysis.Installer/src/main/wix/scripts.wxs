@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?define ScriptSource="..\T3KAnalysis.Scripts" ?>
+<?define ScriptSource="..\T3KAnalysis.Scripts\src\main\ruby" ?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <!--
-      Add in the structure of the scripts files that will be copied
-      to ProgramData\Nuix\Scripts.  Note, the directory id for Help
-      should be copied from here to the Help wxs file as the
-      DirectoryRef
-    -->
     <Fragment>
         <DirectoryRef Id="SCRIPTINSTALLDIR">
             <Directory Id="AnalysisDir"

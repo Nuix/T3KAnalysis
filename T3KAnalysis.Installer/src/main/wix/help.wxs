@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?define HelpSource="..\T3KAnalysis.Help" ?>
+<?define HelpSource="..\T3KAnalysis.Help\src\main\md" ?>
+<?define ResourceSource="..\T3KAnalysis.Help\src\main\resources"?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
@@ -16,7 +17,7 @@
                            Guid="B4B73B93-8DD2-4FCD-B6F9-87E9D4E6036D">
                     <File Id="file_01GFKRXXCABPNKE38SBCRDHZVA"
                           KeyPath="yes"
-                          Source="$(var.HelpSource)\resources\Nuix_Logo_V2_Color.svg"/>
+                          Source="$(var.ResourceSource)\Nuix_Logo_V2_Color.svg"/>
                 </Component>
             </Directory>
         </DirectoryRef>

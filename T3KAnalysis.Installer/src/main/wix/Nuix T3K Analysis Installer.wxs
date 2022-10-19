@@ -4,10 +4,6 @@
 <?define TargetNuixVersion="9.10" ?>
 <?define ProductName="Nuix T3K Analysis" ?>
 <?define ProductVersion="1.0.0" ?>
-<?define ConnectorVersion="1.0.5-SNAPSHOT" ?>
-<?define APIVersion="1.0.6-SNAPSHOT" ?>
-<?define WorkstationVersion="1.0.3-SNAPSHOT" ?>
-<?define ToolboxVersion="1.0.2-SNAPSHOT" ?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 <!--
