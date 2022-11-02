@@ -56,7 +56,16 @@ public class VideoResultTests {
                 }
 
                 if (11 == counter[0]) {
-                    // CCRs are unknonwn as of yet
+                    assertEquals(CCRDetection.class, detection.getClass());
+                    CCRDetection ccr = (CCRDetection) detection;
+                    assertEquals("violence_weapons", ccr.getInfo());
+                    assertEquals(0.2619, ccr.getSimilarity(), 0.002);
+                    DetectionData data = ccr.getData();
+                    assertEquals(VideoDetectionData.class, data.getClass());
+                    assertEquals(85, ((VideoDetectionData)data).getFrame());
+                }
+
+                if (12 == counter[0]) {
                     assertEquals(UnknownDetection.class, detection.getClass());
                 }
 

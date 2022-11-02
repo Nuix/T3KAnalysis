@@ -119,7 +119,7 @@ public class MetadataProfileBase {
         int detectionCount = ((Number)metadataMap.getOrDefault(COUNT_LABEL, 0)).intValue();
 
         List<String> foundItems = new LinkedList<>();
-        for(int i = 1; i <= detectionCount && i <= RETURN_ITEM_COUNT; i++) {
+        for(int i = 1; i <= detectionCount && foundItems.size() <= RETURN_ITEM_COUNT; i++) {
             String detectionLabel = String.format(DETECTION_LABEL_FORMAT, i, contentType);
             String scoreLabel = detectionLabel + SCORE_LABEL_POSTFIX;
             String similarityLabel = detectionLabel + SIMILARITY_LABEL_POSTFIX;
