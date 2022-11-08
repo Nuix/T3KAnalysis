@@ -1,0 +1,44 @@
+{
+	"t3k_server": {
+		"host": "http://127.0.0.1",
+		"port": "5000",
+		"batchsizeupperlimit": 0,
+		"retrycount": 10
+	},
+	"t3k_analysis": {
+        "analyzekinds": "image,multimedia,document",
+		"additionalAnalysisItems": "(kind:image or kind:multimedia)"
+        "caseBaseDirectory": "C:/projects/ProServ/T3K/Cases",
+		"caseBaseName": "T3KAI",
+		"local_file_path": "C:/projects/ProServ/T3K/Data",
+		"server_file_path": "/host/host_mnt/c/projects/ProServ/T3K/Data",
+		"last_data_id": -1
+
+	},
+	"nuix_process": {
+		"workerCount": 4,
+		"workerMemory": 1024,
+		"ocrOutput": "C:/projects/ProServ/T3K/Data/ocr-out",
+		"ocrQuery": "(kind:image or kind:document) and has-text:0",
+		"sendMail": false,
+		"generateReport": true,
+        "reportType": "",
+        "processingProfile": "C:/ProgramData/Nuix/Processing Profiles/T3KAIProfile",
+		"processingFilesDirectory": "C:/projects/ProServ/T3K/Data/processing",
+		"reportsDirectory": "C:/projects/ProServ/T3K/Data/reports"
+	},
+	"nuix_application": {
+		"investigator": "Steven Luke",
+		"appMemory": "Xmx4g",
+		"nuixLogLocation": "C:/projects/ProServ/T3K/Data/logs",
+		"consoleLocation": "C:/Program Files/Nuix/Nuix/nuix_console.exe"
+	},
+	"nuix_license": {
+		"nuixServerType": "desktop",
+		"nsmAddress": "",
+		"registryServer": "",
+		"nmsUid": "",
+		"nmsPwd": "",
+		"licenceType": "enterprise-workstation"
+	}
+}
